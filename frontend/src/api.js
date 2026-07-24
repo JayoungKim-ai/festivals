@@ -13,6 +13,9 @@ const BASE_URL = (
     : 'http://127.0.0.1:8000')
 ).replace(/\/$/, '')
 
+/** Render Free 콜드스타트·네트워크 지연을 고려한 대기 시간(ms) */
+const REQUEST_TIMEOUT_MS = 60_000
+
 /**
  * UI에서 구분할 수 있는 API 오류.
  * - status: HTTP 상태 코드 (네트워크 실패 시 0)
@@ -27,11 +30,35 @@ export class ApiError extends Error {
   }
 }
 
+function createTimeoutSignal(ms) {
+  // AbortSignal.timeout 미지원 브라우저(구형 모바일) 대비
+  if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms)
+  }
+  const controller = new AbortController()
+  setTimeout(() => controller.abort(), ms)
+  return controller.signal
+}
+
 async function request(path, options = {}) {
+  const { signal: userSignal, ...rest } = options
+  const timeoutSignal = createTimeoutSignal(REQUEST_TIMEOUT_MS)
+  // 호출측 signal과 타임아웃을 함께 반영
+  const signal =
+    userSignal && typeof AbortSignal.any === 'function'
+      ? AbortSignal.any([userSignal, timeoutSignal])
+      : timeoutSignal
+
   let response
   try {
-    response = await fetch(`${BASE_URL}${path}`, options)
-  } catch {
+    response = await fetch(`${BASE_URL}${path}`, { ...rest, signal })
+  } catch (err) {
+    if (err && (err.name === 'TimeoutError' || err.name === 'AbortError')) {
+      throw new ApiError(
+        '서버 응답이 너무 깁니다. 잠시 쉬고 있던 서버가 깨어나는 중일 수 있어요. 잠시 후 다시 시도해 주세요.',
+        { status: 0 },
+      )
+    }
     // DNS/연결 거부 등 네트워크 오류
     throw new ApiError('서버에 연결할 수 없습니다. 네트워크와 API 주소를 확인하세요.', {
       status: 0,

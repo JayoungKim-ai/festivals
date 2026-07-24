@@ -35,7 +35,21 @@ logger = logging.getLogger(__name__)
 #   · check_same_thread=False : FastAPI에서 SQLite를 쓸 때 필요한 설정
 #     (이걸 빠뜨리면 초보가 잡기 어려운 에러가 나서, 미리 넣어 둠)
 # --------------------------------------------------------------------------
-engine = create_engine("sqlite:///app.db", connect_args={"check_same_thread": False})
+engine = create_engine(
+    "sqlite:///app.db",
+    connect_args={"check_same_thread": False},
+)
+
+
+def _configure_sqlite() -> None:
+    """
+    WAL 모드: 기동 시 백그라운드 sync(쓰기) 중에도 목록 조회(읽기)가
+    오래 잠기지 않도록 한다. (Render Free 재배포 직후 UX)
+    """
+    with engine.connect() as conn:
+        conn.exec_driver_sql("PRAGMA journal_mode=WAL")
+        conn.exec_driver_sql("PRAGMA busy_timeout=30000")
+        conn.commit()
 
 
 def _festival_count() -> int:
@@ -89,6 +103,7 @@ def _maybe_start_startup_sync() -> None:
 async def lifespan(app: FastAPI):
     # 서버가 켜질 때, 정의된 모델들의 테이블을 자동으로 만든다.
     SQLModel.metadata.create_all(engine)
+    _configure_sqlite()
     # 기존 DB에 region 컬럼이 없으면 추가·백필
     ensure_festival_schema(engine)
     # DB가 비어 있으면(배포 직후 등) 공공데이터 sync — 포트 바인딩을 막지 않도록 백그라운드

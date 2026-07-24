@@ -193,7 +193,7 @@ export default function FestivalListPage() {
 
       {status === 'loading' && (
         <p className="state-message" role="status">
-          축제 목록을 불러오는 중…
+          축제 목록을 불러오는 중… (처음이면 서버 기동에 최대 1분 정도 걸릴 수 있어요)
         </p>
       )}
 
