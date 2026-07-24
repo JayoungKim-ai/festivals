@@ -18,6 +18,12 @@ const DefaultIcon = L.icon({
 })
 L.Marker.prototype.options.icon = DefaultIcon
 
+// 지도 타일: 기본 OpenStreetMap (지역명 라벨이 잘 보임)
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+const TILE_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+const TILE_SUBDOMAINS = 'abc'
+
 /** 좌표 유효 여부 (상세·달력 지도 공통) */
 export function hasValidCoordinates(latitude, longitude) {
   const lat = Number(latitude)
@@ -56,11 +62,14 @@ export default function FestivalMap({ latitude, longitude, name }) {
         center={position}
         zoom={14}
         scrollWheelZoom={false}
+        dragging={false}
+        touchZoom={true}
         className="festival-map__canvas"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={TILE_ATTRIBUTION}
+          url={TILE_URL}
+          subdomains={TILE_SUBDOMAINS}
         />
         <Marker position={position}>
           {name ? <Popup>{name}</Popup> : null}
@@ -98,11 +107,14 @@ export function FestivalsMap({ festivals }) {
         center={center}
         zoom={12}
         scrollWheelZoom={false}
+        dragging={false}
+        touchZoom={true}
         className="festival-map__canvas festival-map__canvas--wide"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={TILE_ATTRIBUTION}
+          url={TILE_URL}
+          subdomains={TILE_SUBDOMAINS}
         />
         <FitBounds positions={positions} />
         {points.map((point) => (

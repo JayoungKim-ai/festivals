@@ -87,8 +87,16 @@ export default function Fireworks() {
       }
     }
 
+    // 폭죽을 터뜨릴 버튼들 (검색·상세보기·즐겨찾기·공유하기)
+    const TRIGGER_SELECTOR =
+      '.search-bar__button, .festival-card__link, .favorite-button, .share-button'
+
     function handleClick(e) {
-      burst(e.clientX, e.clientY)
+      const target = e.target.closest?.(TRIGGER_SELECTOR)
+      if (!target) return // 지정한 버튼이 아니면 효과 없음
+      // 버튼 중앙에서 터지도록 위치 계산
+      const rect = target.getBoundingClientRect()
+      burst(rect.left + rect.width / 2, rect.top + rect.height / 2)
     }
 
     // capture 단계로 등록해, stopPropagation을 호출하는 버튼 클릭도 잡는다.
