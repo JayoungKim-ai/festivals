@@ -2,7 +2,16 @@
 // 백엔드(FastAPI) 호출 함수 모음
 // 화면은 여기 함수만 부른다. 공공데이터 API는 직접 호출하지 않는다.
 // ---------------------------------------------------------------
-const BASE_URL = 'http://127.0.0.1:8000'
+// API 주소 우선순위:
+// 1) VITE_API_BASE_URL (로컬 .env / Vercel Environment Variables)
+// 2) 프로덕션 빌드면 Render 백엔드
+// 3) 로컬 개발이면 127.0.0.1:8000
+const BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD
+    ? 'https://festivals-nmj9.onrender.com'
+    : 'http://127.0.0.1:8000')
+).replace(/\/$/, '')
 
 /**
  * UI에서 구분할 수 있는 API 오류.
@@ -24,7 +33,7 @@ async function request(path, options = {}) {
     response = await fetch(`${BASE_URL}${path}`, options)
   } catch {
     // DNS/연결 거부 등 네트워크 오류
-    throw new ApiError('서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.', {
+    throw new ApiError('서버에 연결할 수 없습니다. 네트워크와 API 주소를 확인하세요.', {
       status: 0,
     })
   }
