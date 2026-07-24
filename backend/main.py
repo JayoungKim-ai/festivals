@@ -149,7 +149,9 @@ def list_festivals(
     ] = None,
     status: Annotated[
         str | None,
-        Query(description="진행 상태 필터: ongoing(진행중) | ended(종료). 비우면 전체"),
+        Query(
+            description="진행 상태 필터: ongoing(진행중) | upcoming(예정) | ended(종료). 비우면 전체",
+        ),
     ] = None,
 ):
     """SQLite에 저장된 축제 목록을 페이지 단위로 반환한다. search·region·status 를 함께 적용할 수 있다."""
@@ -273,16 +275,17 @@ def _festival_status_filter(status_value: str):
     """
     진행 상태 필터 조건을 반환한다. (오늘 날짜 기준)
 
-    - ongoing(진행중): start_date <= 오늘 <= COALESCE(end_date, start_date)
-    - ended(종료):     COALESCE(end_date, start_date) < 오늘
-    - 그 외(전체):      None (필터 없음)
+    - ongoing(진행중):  start_date <= 오늘 <= COALESCE(end_date, start_date)
+    - upcoming(예정):   start_date > 오늘 (아직 시작 전)
+    - ended(종료):      COALESCE(end_date, start_date) < 오늘
+    - 그 외(전체):       None (필터 없음)
 
     end_date 가 없으면 start_date 당일까지를 종료일로 본다.
     """
     from datetime import date as date_cls
     from sqlalchemy import func as sa_func
 
-    if status_value not in ("ongoing", "ended"):
+    if status_value not in ("ongoing", "upcoming", "ended"):
         return None
 
     today = date_cls.today()
@@ -294,6 +297,11 @@ def _festival_status_filter(status_value: str):
             col(Festival.start_date).is_not(None)
             & (col(Festival.start_date) <= today)
             & (effective_end >= today)
+        )
+    if status_value == "upcoming":
+        return (
+            col(Festival.start_date).is_not(None)
+            & (col(Festival.start_date) > today)
         )
     # ended
     return (

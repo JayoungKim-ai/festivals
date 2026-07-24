@@ -11,6 +11,7 @@ const LIST_SIZE = 10
 const STATUS_TABS = [
   { value: '', label: '전체' },
   { value: 'ongoing', label: '진행중' },
+  { value: 'upcoming', label: '예정' },
   { value: 'ended', label: '종료' },
 ]
 

@@ -8,6 +8,17 @@ import { NavLink } from 'react-router-dom'
 
 const TABS = [
   {
+    to: '/festivals',
+    label: '축제 찾기',
+    // 돋보기
+    icon: (
+      <>
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.5" y2="16.5" />
+      </>
+    ),
+  },
+  {
     to: '/calendar',
     label: '일자·지역',
     // 달력
@@ -17,17 +28,6 @@ const TABS = [
         <line x1="3" y1="9" x2="21" y2="9" />
         <line x1="8" y1="2" x2="8" y2="6" />
         <line x1="16" y1="2" x2="16" y2="6" />
-      </>
-    ),
-  },
-  {
-    to: '/festivals',
-    label: '축제 찾기',
-    // 돋보기
-    icon: (
-      <>
-        <circle cx="11" cy="11" r="7" />
-        <line x1="21" y1="21" x2="16.5" y2="16.5" />
       </>
     ),
   },
