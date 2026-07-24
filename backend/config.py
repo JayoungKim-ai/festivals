@@ -55,3 +55,34 @@ FESTIVAL_API_NUM_OF_ROWS: int = int(_optional("FESTIVAL_API_NUM_OF_ROWS", "100")
 
 # 기동 시 festivals 테이블이 비어 있으면 공공데이터 sync (Render 재배포용)
 SYNC_ON_STARTUP: bool = _optional_bool("SYNC_ON_STARTUP", True)
+
+# CORS 허용 Origin (로컬 Vite + 배포 프론트)
+# CORS_ORIGINS 에 쉼표로 추가 Origin을 넣을 수 있다.
+_DEFAULT_CORS_ORIGINS: tuple[str, ...] = (
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",  # vite preview
+    "http://127.0.0.1:4173",
+    "https://festivals-sigma.vercel.app",
+)
+
+
+def _cors_origins() -> list[str]:
+    """기본 Origin + 환경변수 CORS_ORIGINS(쉼표 구분)를 합친다."""
+    seen: set[str] = set()
+    origins: list[str] = []
+    extra = [
+        part.strip().rstrip("/")
+        for part in _optional("CORS_ORIGINS", "").split(",")
+        if part.strip()
+    ]
+    for origin in (*_DEFAULT_CORS_ORIGINS, *extra):
+        if origin not in seen:
+            seen.add(origin)
+            origins.append(origin)
+    return origins
+
+
+CORS_ORIGINS: list[str] = _cors_origins()
+# Vercel 프리뷰 배포(프로젝트명 festivals-…)도 허용
+CORS_ORIGIN_REGEX: str = r"https://festivals[\w-]*\.vercel\.app"

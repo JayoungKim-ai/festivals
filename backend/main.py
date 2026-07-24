@@ -98,10 +98,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="My App API", lifespan=lifespan)
 
-# [배선] 브라우저의 React(다른 포트)에서 이 API를 부를 수 있게 허용 (없으면 CORS 에러)
+# [배선] 브라우저의 React(다른 Origin)에서 이 API를 부를 수 있게 허용
+# 로컬(Vite) + Vercel 배포 Origin만 허용 (config.CORS_ORIGINS / CORS_ORIGINS env)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # 교육용 전체 허용. 실무에선 도메인 지정
+    allow_origins=config.CORS_ORIGINS,
+    allow_origin_regex=config.CORS_ORIGIN_REGEX,
     allow_methods=["*"],
     allow_headers=["*"],
 )
