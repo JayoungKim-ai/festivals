@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import MobileNav from './MobileNav'
 
 /** 모든 페이지에 헤더·푸터를 공통으로 감싸는 레이아웃 */
 export default function Layout() {
@@ -11,6 +12,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <MobileNav />
     </div>
   )
 }

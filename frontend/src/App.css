@@ -1,16 +1,63 @@
+:root {
+  /* 쨍한 비비드 팔레트 */
+  --primary: #4f46e5;         /* 인디고 */
+  --primary-strong: #4338ca;
+  --primary-soft: #eef2ff;
+  --accent: #ec4899;          /* 핑크 */
+  --accent-soft: #fce7f3;
+  --cyan: #06b6d4;
+  --amber: #f59e0b;
+
+  --ink: #0f172a;             /* 진한 슬레이트 */
+  --ink-soft: #475569;
+  --ink-muted: #94a3b8;
+
+  --card: #ffffff;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.16);
+
+  --grad: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  --grad-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 12px rgba(79, 70, 229, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
 * {
   box-sizing: border-box;
+}
+
+html {
+  /* iOS 가로 방향 전환 시 글자 크기 자동 확대 방지 */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, #dce8f5 0%, transparent 55%),
-    radial-gradient(ellipse 70% 40% at 100% 0%, #e8f0e4 0%, transparent 50%),
-    #f7f5f0;
-  color: #1c1917;
+    radial-gradient(ellipse 70% 45% at 8% -8%, rgba(99, 102, 241, 0.28) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.22) 0%, transparent 52%),
+    radial-gradient(ellipse 80% 55% at 50% 110%, rgba(6, 182, 212, 0.18) 0%, transparent 55%),
+    #f6f7fd;
+  background-attachment: fixed;
+  color: var(--ink);
   min-height: 100vh;
+  /* 어떤 요소가 넘쳐도 화면이 좌우로 흔들리지 않게 */
+  overflow-x: hidden;
+}
+
+/* 이미지·지도 등이 컨테이너를 넘지 않도록 */
+img,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 모바일 탭 시 파란 하이라이트 최소화 */
+button,
+a {
+  -webkit-tap-highlight-color: rgba(28, 25, 23, 0.08);
 }
 
 a {
@@ -39,9 +86,12 @@ a {
 
 /* ----- Header ----- */
 .site-header {
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
-  background: rgba(255, 252, 247, 0.85);
-  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
 }
 
 .site-header__inner {
@@ -55,33 +105,50 @@ a {
 }
 
 .site-brand {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .site-nav {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .site-nav__link {
-  padding: 8px 12px;
-  color: #57534e;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--ink-soft);
   font-size: 0.95rem;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.site-nav__link:hover,
+.site-nav__link:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+
 .site-nav__link.is-active {
-  color: #1c1917;
-  font-weight: 600;
+  color: #fff;
+  background: var(--primary);
+}
+
+/* ----- Mobile bottom navigation ----- */
+.mobile-nav {
+  display: none;
 }
 
 /* ----- Footer ----- */
 .site-footer {
-  border-top: 1px solid rgba(28, 25, 23, 0.08);
-  background: #1c1917;
-  color: #e7e5e4;
+  border-top: 1px solid var(--border);
+  background: #0f172a;
+  color: #e2e8f0;
+  background-image: linear-gradient(90deg, rgba(99, 102, 241, 0.18), rgba(236, 72, 153, 0.12));
 }
 
 .site-footer__inner {
@@ -105,13 +172,15 @@ a {
 /* ----- Page placeholders ----- */
 .page__title {
   margin: 0 0 8px;
-  font-size: 1.75rem;
-  letter-spacing: -0.03em;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--ink);
 }
 
 .page__lead {
   margin: 0 0 16px;
-  color: #57534e;
+  color: var(--ink-soft);
   line-height: 1.6;
 }
 
@@ -121,7 +190,12 @@ a {
 }
 
 .page__back a {
-  color: #44403c;
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.page__back a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -129,7 +203,7 @@ a {
 .page__list {
   margin: 0;
   padding-left: 1.2rem;
-  color: #44403c;
+  color: var(--ink-soft);
   line-height: 1.7;
 }
 
@@ -138,7 +212,7 @@ a {
 }
 
 .page__list a {
-  color: #1d4f63;
+  color: var(--primary);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -151,14 +225,17 @@ a {
 
 .about-block__title {
   margin: 0 0 10px;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
-  color: #1c1917;
+  color: var(--ink);
+  padding-left: 12px;
+  border-left: 4px solid var(--primary);
 }
 
 .about-block__text {
   margin: 0 0 10px;
-  color: #44403c;
+  color: var(--ink-soft);
   line-height: 1.7;
 }
 
@@ -194,7 +271,7 @@ a {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #44403c;
+  color: var(--ink-soft);
 }
 
 .search-bar__row {
@@ -205,11 +282,12 @@ a {
 .search-bar__select,
 .search-bar__input {
   padding: 12px 14px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
-  border-radius: 10px;
-  background: #fffdf9;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: #fff;
   font: inherit;
-  color: #1c1917;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .search-bar__select {
@@ -223,34 +301,41 @@ a {
 
 .search-bar__input:focus,
 .search-bar__select:focus {
-  outline: 2px solid #3f6f8a;
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .search-bar__button {
   flex-shrink: 0;
-  padding: 12px 18px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 10px;
-  background: #2f5d73;
-  color: #f8fafc;
+  border-radius: 12px;
+  background: var(--grad);
+  color: #fff;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.12s ease, filter 0.15s ease;
 }
 
 .search-bar__button:hover {
-  background: #254a5c;
+  filter: brightness(1.05);
+}
+
+.search-bar__button:active {
+  transform: translateY(1px);
 }
 
 .result-count {
   margin: 0 0 14px;
   font-size: 0.95rem;
-  color: #44403c;
+  color: var(--ink-soft);
 }
 
 .result-count__hint {
-  color: #78716c;
+  color: var(--ink-muted);
   font-size: 0.85rem;
 }
 
@@ -265,23 +350,25 @@ a {
 
 .pagination__button {
   min-width: 4.5rem;
-  padding: 10px 14px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
-  border-radius: 10px;
-  background: #fffdf9;
-  color: #1c1917;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .pagination__button:hover:not(:disabled) {
-  background: #f5f0e8;
-  border-color: rgba(28, 25, 23, 0.28);
+  background: var(--primary-soft);
+  border-color: var(--primary);
 }
 
 .pagination__button:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+  color: var(--ink-muted);
   cursor: not-allowed;
 }
 
@@ -290,7 +377,8 @@ a {
   min-width: 4.5rem;
   text-align: center;
   font-size: 0.95rem;
-  color: #44403c;
+  color: var(--ink-soft);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -304,20 +392,48 @@ a {
 }
 
 .festival-card {
+  position: relative;
   display: flex;
   align-items: stretch;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
-  border: 1px solid rgba(28, 25, 23, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 253, 249, 0.92);
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.festival-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--grad);
+}
+
+.festival-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.festival-card__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .festival-card__title {
   margin: 0 0 10px;
-  font-size: 1.1rem;
+  font-size: 1.12rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
+  color: var(--ink);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .festival-card__heading {
@@ -347,45 +463,47 @@ a {
 
 .festival-card__meta dt {
   margin: 0;
-  color: #78716c;
+  color: var(--ink-muted);
 }
 
 .festival-card__meta dd {
   margin: 0;
-  color: #292524;
+  color: var(--ink-soft);
   word-break: keep-all;
 }
 
 .festival-card__link {
   align-self: center;
   flex-shrink: 0;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-radius: 999px;
-  background: #e8eef2;
-  color: #1e3a47;
+  background: var(--primary-soft);
+  color: var(--primary);
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .festival-card__link:hover {
-  background: #d5e2ea;
+  background: var(--primary);
+  color: #fff;
 }
 
 .state-message {
   margin: 24px 0;
-  padding: 20px;
+  padding: 22px;
   text-align: center;
-  color: #57534e;
-  background: rgba(255, 253, 249, 0.8);
-  border-radius: 12px;
-  border: 1px dashed rgba(28, 25, 23, 0.15);
+  color: var(--ink-soft);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  border: 1px dashed var(--border-strong);
 }
 
 .state-box {
   margin: 24px 0;
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 .state-box--error {
@@ -423,7 +541,8 @@ a {
 .detail-period {
   margin: 0 0 24px;
   font-size: 1.05rem;
-  color: #57534e;
+  font-weight: 600;
+  color: var(--primary);
 }
 
 .detail-header {
@@ -456,21 +575,23 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
+  padding: 9px 14px;
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: #fffdf9;
-  color: #57534e;
+  background: #fff;
+  color: var(--ink-soft);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .share-button:hover {
-  border-color: rgba(29, 79, 99, 0.35);
-  color: #1d4f63;
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .share-button--done {
@@ -489,27 +610,29 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
+  padding: 9px 14px;
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
-  background: #fffdf9;
-  color: #57534e;
+  background: #fff;
+  color: var(--ink-soft);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .favorite-button:hover {
-  border-color: rgba(180, 83, 9, 0.35);
-  color: #9a3412;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .favorite-button--active {
-  background: #fff7ed;
-  border-color: #fdba74;
-  color: #c2410c;
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .favorite-button__icon {
@@ -519,15 +642,17 @@ a {
 
 .favorites-notice {
   margin: 0 0 16px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #eff6ff;
-  color: #1e3a5f;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary-strong);
   font-size: 0.9rem;
+  border: 1px solid rgba(79, 70, 229, 0.15);
 }
 
 .favorites-page .state-message a {
-  color: #1d4f63;
+  color: var(--primary);
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -559,26 +684,36 @@ a {
 }
 
 .calendar-month-nav__btn {
-  padding: 10px 12px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
-  border-radius: 10px;
-  background: #fffdf9;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--primary);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .calendar-month-nav__btn:hover {
-  background: #f5f0e8;
+  background: var(--primary-soft);
+  border-color: var(--primary);
 }
 
 .calendar-month-nav__input {
   flex: 1;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid rgba(28, 25, 23, 0.16);
-  border-radius: 10px;
-  background: #fffdf9;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: #fff;
   font: inherit;
+}
+
+.calendar-month-nav__input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .calendar-grid {
@@ -591,14 +726,14 @@ a {
 .calendar-grid__weekday {
   text-align: center;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: #78716c;
+  font-weight: 700;
+  color: var(--ink-muted);
   padding: 4px 0;
 }
 
 .calendar-grid__cell {
   min-height: 64px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid transparent;
 }
 
@@ -613,31 +748,33 @@ a {
   justify-content: space-between;
   gap: 4px;
   padding: 8px;
-  background: #fffdf9;
-  border-color: rgba(28, 25, 23, 0.1);
+  background: #fff;
+  border-color: var(--border);
   font: inherit;
   text-align: left;
   cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.12s ease;
 }
 
 .calendar-grid__cell--day:hover {
-  border-color: rgba(47, 93, 115, 0.45);
+  border-color: var(--primary);
+  transform: translateY(-1px);
 }
 
 .calendar-grid__cell--zero {
-  color: #a8a29e;
-  background: rgba(255, 253, 249, 0.55);
+  color: var(--ink-muted);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .calendar-grid__cell--has-events {
-  background: #eef6f4;
-  border-color: rgba(47, 93, 115, 0.2);
+  background: var(--primary-soft);
+  border-color: rgba(79, 70, 229, 0.25);
 }
 
 .calendar-grid__cell--selected {
-  outline: 2px solid #2f5d73;
+  outline: 2px solid var(--primary);
   outline-offset: 1px;
-  background: #e2eef4;
+  background: #e0e7ff;
 }
 
 .calendar-grid__day {
@@ -646,34 +783,35 @@ a {
 }
 
 .calendar-grid__count {
-  font-size: 0.75rem;
-  color: #44403c;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--primary);
 }
 
 .calendar-grid__cell--zero .calendar-grid__count {
-  color: #a8a29e;
+  color: var(--ink-muted);
 }
 
 .calendar-selection {
   margin-top: 8px;
   padding: 14px 16px;
-  border-radius: 12px;
-  background: rgba(255, 253, 249, 0.9);
-  border: 1px dashed rgba(28, 25, 23, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px dashed var(--border-strong);
 }
 
 .calendar-selection__text {
   margin: 0;
-  color: #44403c;
+  color: var(--ink-soft);
   line-height: 1.5;
 }
 
 .calendar-selection__text--muted {
-  color: #78716c;
+  color: var(--ink-muted);
 }
 
 .calendar-selection__hint {
-  color: #78716c;
+  color: var(--ink-muted);
   font-size: 0.9rem;
 }
 
@@ -685,6 +823,7 @@ a {
 .calendar-day-panel__title {
   margin: 0 0 14px;
   font-size: 1.2rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -716,10 +855,11 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border-top: 1px solid rgba(28, 25, 23, 0.1);
-  background: rgba(255, 253, 249, 0.92);
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .detail-row {
@@ -727,7 +867,7 @@ a {
   grid-template-columns: 7rem 1fr;
   gap: 12px;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(28, 25, 23, 0.08);
+  border-bottom: 1px solid var(--border);
   align-items: start;
 }
 
@@ -738,13 +878,13 @@ a {
 .detail-row dt {
   margin: 0;
   font-size: 0.875rem;
-  font-weight: 600;
-  color: #78716c;
+  font-weight: 700;
+  color: var(--ink-muted);
 }
 
 .detail-row dd {
   margin: 0;
-  color: #1c1917;
+  color: var(--ink);
   line-height: 1.55;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -757,13 +897,14 @@ a {
 }
 
 .detail-link {
-  color: #1d4f63;
+  color: var(--primary);
+  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
 .detail-link:hover {
-  color: #163b4a;
+  color: var(--primary-strong);
 }
 
 /* ----- Festival map ----- */
@@ -773,7 +914,8 @@ a {
 
 .detail-map-section__title {
   margin: 0 0 12px;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
@@ -782,10 +924,11 @@ a {
 }
 
 .festival-map {
-  border: 1px solid rgba(28, 25, 23, 0.1);
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
   overflow: hidden;
-  background: #fffdf9;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
 }
 
 .festival-map__canvas {
@@ -801,37 +944,159 @@ a {
   margin: 0;
   padding: 8px 12px;
   font-size: 0.75rem;
-  color: #78716c;
-  border-top: 1px solid rgba(28, 25, 23, 0.08);
+  color: var(--ink-muted);
+  border-top: 1px solid var(--border);
 }
 
 @media (max-width: 640px) {
+  /* 헤더: 브랜드만 남긴 깔끔한 바. 메뉴는 하단 탭으로 이동 */
   .site-header__inner {
-    flex-direction: column;
-    align-items: flex-start;
+    justify-content: center;
+    padding: 14px 16px;
+  }
+
+  .site-nav {
+    display: none;
+  }
+
+  .site-brand {
+    font-size: 1.15rem;
+  }
+
+  /* 본문: 하단 탭바에 가리지 않도록 아래 여백 확보 (safe-area 포함) */
+  .app-main {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 
   .page__title {
-    font-size: 1.45rem;
+    font-size: 1.4rem;
   }
 
+  .page__lead {
+    font-size: 0.95rem;
+  }
+
+  /* ----- 하단 탭 내비게이션 ----- */
+  .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(79, 70, 229, 0.08);
+  }
+
+  .mobile-nav__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    border-radius: 14px;
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .mobile-nav__item.is-active {
+    color: #fff;
+    background: var(--grad);
+  }
+
+  .mobile-nav__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .mobile-nav__label {
+    line-height: 1;
+  }
+
+  /* ----- 카드 ----- */
   .festival-card {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(28, 25, 23, 0.05);
   }
 
   .festival-card__link {
     align-self: stretch;
     text-align: center;
+    padding: 13px 14px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+  }
+
+  .festival-card__link:active {
+    background: #c7d8e2;
   }
 
   .festival-card__meta div {
-    grid-template-columns: 1fr;
-    gap: 2px;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 8px;
   }
 
+  /* ----- 상세 ----- */
   .detail-row {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detail-header__actions {
+    justify-content: flex-start;
+  }
+
+  .detail-header__actions .share-button,
+  .detail-header__actions .favorite-button {
+    flex: 1;
+    justify-content: center;
+    padding: 11px 12px;
+  }
+
+  /* ----- 검색 ----- */
+  .search-bar {
+    padding: 14px;
+    border-radius: 14px;
+    background: rgba(255, 253, 249, 0.92);
+    border: 1px solid rgba(28, 25, 23, 0.08);
+  }
+
+  .search-bar__field,
+  .search-bar__field--grow {
+    min-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .search-bar__select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* ----- 페이지네이션 ----- */
+  .pagination__button {
+    flex: 1;
+    padding: 13px 14px;
+  }
+
+  /* ----- 지도 ----- */
+  .festival-map__canvas,
+  .festival-map__canvas--wide {
+    height: 240px;
   }
 }

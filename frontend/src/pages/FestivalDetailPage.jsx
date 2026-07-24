@@ -8,7 +8,12 @@ import { useFavorites } from '../hooks/useFavorites'
 
 const EMPTY = '정보 없음'
 
-/** 빈 값을 “정보 없음”으로 표시 */
+/** 값이 실제로 존재하는지(널·공백 제외) */
+function hasText(value) {
+  return value !== null && value !== undefined && String(value).trim() !== ''
+}
+
+/** 빈 값을 “정보 없음”으로 표시 (제목 등 항상 노출되는 곳에서 사용) */
 function displayText(value) {
   if (value === null || value === undefined) return EMPTY
   const text = String(value).trim()
@@ -60,11 +65,17 @@ function telHref(phone) {
   return normalized ? `tel:${normalized}` : null
 }
 
-function DetailRow({ label, children }) {
+/**
+ * 상세 항목 한 줄
+ * - value: 값 존재 여부 판단용 원본 값. 비어 있으면 행 자체를 렌더링하지 않는다.
+ * - children: 실제로 표시할 내용(없으면 value를 그대로 표시)
+ */
+function DetailRow({ label, value, children }) {
+  if (!hasText(value)) return null
   return (
     <div className="detail-row">
       <dt>{label}</dt>
-      <dd>{children}</dd>
+      <dd>{children ?? String(value).trim()}</dd>
     </div>
   )
 }
@@ -143,7 +154,11 @@ export default function FestivalDetailPage() {
           <div className="detail-header">
             <div className="detail-header__text">
               <h1 className="page__title">{displayText(festival.festival_name)}</h1>
-              <p className="detail-period">{formatPeriod(festival.start_date, festival.end_date)}</p>
+              {(hasText(festival.start_date) || hasText(festival.end_date)) && (
+                <p className="detail-period">
+                  {formatPeriod(festival.start_date, festival.end_date)}
+                </p>
+              )}
             </div>
             <div className="detail-header__actions">
               <ShareButton
@@ -158,30 +173,33 @@ export default function FestivalDetailPage() {
           </div>
 
           <dl className="detail-grid">
-            <DetailRow label="개최장소">{displayText(festival.location)}</DetailRow>
-            <DetailRow label="개최기간">
+            <DetailRow label="개최장소" value={festival.location} />
+            <DetailRow
+              label="개최기간"
+              value={festival.start_date || festival.end_date}
+            >
               {formatPeriod(festival.start_date, festival.end_date)}
             </DetailRow>
 
-            <DetailRow label="축제내용">
-              <p className="detail-description">{displayText(festival.description)}</p>
+            <DetailRow label="축제내용" value={festival.description}>
+              <p className="detail-description">{String(festival.description ?? '').trim()}</p>
             </DetailRow>
 
-            <DetailRow label="주관기관">{displayText(festival.managing_org)}</DetailRow>
-            <DetailRow label="주최기관">{displayText(festival.hosting_org)}</DetailRow>
-            <DetailRow label="후원기관">{displayText(festival.sponsoring_org)}</DetailRow>
+            <DetailRow label="주관기관" value={festival.managing_org} />
+            <DetailRow label="주최기관" value={festival.hosting_org} />
+            <DetailRow label="후원기관" value={festival.sponsoring_org} />
 
-            <DetailRow label="전화번호">
+            <DetailRow label="전화번호" value={festival.phone}>
               {phoneLink ? (
                 <a className="detail-link" href={phoneLink}>
-                  {displayText(festival.phone)}
+                  {String(festival.phone).trim()}
                 </a>
               ) : (
-                displayText(festival.phone)
+                String(festival.phone ?? '').trim()
               )}
             </DetailRow>
 
-            <DetailRow label="홈페이지">
+            <DetailRow label="홈페이지" value={festival.homepage_url}>
               {homepage ? (
                 <a
                   className="detail-link"
@@ -189,16 +207,16 @@ export default function FestivalDetailPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {displayText(festival.homepage_url)}
+                  {String(festival.homepage_url).trim()}
                 </a>
               ) : (
-                displayText(festival.homepage_url)
+                String(festival.homepage_url ?? '').trim()
               )}
             </DetailRow>
 
-            <DetailRow label="관련정보">{displayText(festival.related_info)}</DetailRow>
-            <DetailRow label="도로명주소">{displayText(festival.road_address)}</DetailRow>
-            <DetailRow label="지번주소">{displayText(festival.parcel_address)}</DetailRow>
+            <DetailRow label="관련정보" value={festival.related_info} />
+            <DetailRow label="도로명주소" value={festival.road_address} />
+            <DetailRow label="지번주소" value={festival.parcel_address} />
           </dl>
 
           <section className="detail-map-section" aria-label="개최 위치 지도">
