@@ -245,6 +245,42 @@ a {
 }
 
 /* ----- Festival list / search ----- */
+/* 진행 상태 탭 (전체 | 진행중 | 종료) */
+.status-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.status-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.status-tab:hover {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.status-tab--active,
+.status-tab--active:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
 /* 검색 영역을 콘텐츠와 확실히 구분되는 카드로 만든다 */
 .search-bar {
   margin: 0 0 28px;

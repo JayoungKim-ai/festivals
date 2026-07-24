@@ -7,6 +7,16 @@ import { useFavorites } from '../hooks/useFavorites'
 /** 한 페이지에 표시할 축제 수 (N-1) */
 const LIST_SIZE = 10
 
+/** 진행 상태 탭 정의 (value 는 백엔드 status 파라미터와 일치) */
+const STATUS_TABS = [
+  { value: '', label: '전체' },
+  { value: 'ongoing', label: '진행중' },
+  { value: 'ended', label: '종료' },
+]
+
+/** 기본 선택 탭: 진행중 */
+const DEFAULT_STATUS = 'ongoing'
+
 /** 날짜를 PRD 형식으로 표시 (YYYY.MM.DD) */
 function formatDate(value) {
   if (!value) return null
@@ -59,6 +69,7 @@ export default function FestivalListPage() {
   const [regions, setRegions] = useState([])
   const [appliedSearch, setAppliedSearch] = useState('')
   const [appliedRegion, setAppliedRegion] = useState('')
+  const [statusTab, setStatusTab] = useState(DEFAULT_STATUS) // 진행 상태 탭 ('' | ongoing | ended)
   const [page, setPage] = useState(1)
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -67,7 +78,7 @@ export default function FestivalListPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / LIST_SIZE))
 
-  async function loadFestivals(keyword, regionName, pageNumber) {
+  async function loadFestivals(keyword, regionName, pageNumber, statusValue = statusTab) {
     setStatus('loading')
     setErrorMessage('')
 
@@ -77,6 +88,7 @@ export default function FestivalListPage() {
         size: LIST_SIZE,
         search: keyword,
         region: regionName,
+        status: statusValue,
       })
       const list = Array.isArray(data.items) ? data.items : []
       const nextTotal = typeof data.total === 'number' ? data.total : list.length
@@ -110,8 +122,17 @@ export default function FestivalListPage() {
       .catch(() => {
         setRegions([])
       })
-    loadFestivals('', '', 1)
+    // 초기 로드는 기본 탭(진행중) 기준
+    loadFestivals('', '', 1, DEFAULT_STATUS)
   }, [])
+
+  function handleStatusChange(nextStatus) {
+    if (nextStatus === statusTab) return
+    setStatusTab(nextStatus)
+    setPage(1)
+    // 탭 변경 시 현재 검색어·지역을 유지한 채 1페이지부터 다시 조회
+    loadFestivals(appliedSearch, appliedRegion, 1, nextStatus)
+  }
 
   function handleSearch(event) {
     event.preventDefault()
@@ -147,6 +168,21 @@ export default function FestivalListPage() {
       <p className="page__lead">
         축제 이름과 지역으로 검색하거나, 목록에서 관심 있는 축제를 골라 상세 정보를 확인하세요.
       </p>
+
+      <div className="status-tabs" role="tablist" aria-label="축제 진행 상태">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.value || 'all'}
+            type="button"
+            role="tab"
+            aria-selected={statusTab === tab.value}
+            className={`status-tab${statusTab === tab.value ? ' status-tab--active' : ''}`}
+            onClick={() => handleStatusChange(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <form className="search-bar" onSubmit={handleSearch} role="search">
         <div className="search-bar__filters">

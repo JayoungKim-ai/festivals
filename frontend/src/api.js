@@ -96,9 +96,16 @@ export async function checkHealth() {
 
 /**
  * 축제 목록 조회
- * @param {{ page?: number, size?: number, search?: string, region?: string }} params
+ * @param {{ page?: number, size?: number, search?: string, region?: string, status?: string }} params
+ *   status: '' (전체) | 'ongoing' (진행중) | 'ended' (종료)
  */
-export async function fetchFestivals({ page = 1, size = 10, search = '', region = '' } = {}) {
+export async function fetchFestivals({
+  page = 1,
+  size = 10,
+  search = '',
+  region = '',
+  status = '',
+} = {}) {
   const query = new URLSearchParams()
   query.set('page', String(page))
   query.set('size', String(size))
@@ -106,6 +113,8 @@ export async function fetchFestivals({ page = 1, size = 10, search = '', region 
   if (keyword) query.set('search', keyword)
   const regionName = (region || '').trim()
   if (regionName) query.set('region', regionName)
+  const statusValue = (status || '').trim()
+  if (statusValue) query.set('status', statusValue)
 
   return request(`/api/festivals?${query.toString()}`)
 }

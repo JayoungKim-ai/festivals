@@ -10,13 +10,13 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Navigate to="/calendar" replace />} />
+        <Route index element={<Navigate to="/festivals" replace />} />
         <Route path="festivals" element={<FestivalListPage />} />
         <Route path="festivals/:id" element={<FestivalDetailPage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="favorites" element={<FavoritesPage />} />
         <Route path="about" element={<AboutPage />} />
-        <Route path="*" element={<Navigate to="/calendar" replace />} />
+        <Route path="*" element={<Navigate to="/festivals" replace />} />
       </Route>
     </Routes>
   )

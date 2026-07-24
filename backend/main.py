@@ -147,10 +147,15 @@ def list_festivals(
         str | None,
         Query(description="시도 지역 필터 (예: 서울특별시). 비우면 전체"),
     ] = None,
+    status: Annotated[
+        str | None,
+        Query(description="진행 상태 필터: ongoing(진행중) | ended(종료). 비우면 전체"),
+    ] = None,
 ):
-    """SQLite에 저장된 축제 목록을 페이지 단위로 반환한다. search·region 을 함께 적용할 수 있다."""
+    """SQLite에 저장된 축제 목록을 페이지 단위로 반환한다. search·region·status 를 함께 적용할 수 있다."""
     keyword = (search or "").strip()
     region_name = (region or "").strip()
+    status_value = (status or "").strip().lower()
 
     with Session(engine) as session:
         base_stmt = select(Festival)
@@ -165,6 +170,11 @@ def list_festivals(
             region_filter = col(Festival.region) == region_name
             base_stmt = base_stmt.where(region_filter)
             count_stmt = count_stmt.where(region_filter)
+
+        status_filter = _festival_status_filter(status_value)
+        if status_filter is not None:
+            base_stmt = base_stmt.where(status_filter)
+            count_stmt = count_stmt.where(status_filter)
 
         total = session.exec(count_stmt).one()
         offset = (page - 1) * size
@@ -184,6 +194,7 @@ def list_festivals(
         "total": total,
         "search": keyword or None,
         "region": region_name or None,
+        "status": status_value or None,
     }
 
 
@@ -256,6 +267,39 @@ def date_from_iso(value: str):
     from datetime import date as date_cls
 
     return date_cls.fromisoformat(value.strip())
+
+
+def _festival_status_filter(status_value: str):
+    """
+    진행 상태 필터 조건을 반환한다. (오늘 날짜 기준)
+
+    - ongoing(진행중): start_date <= 오늘 <= COALESCE(end_date, start_date)
+    - ended(종료):     COALESCE(end_date, start_date) < 오늘
+    - 그 외(전체):      None (필터 없음)
+
+    end_date 가 없으면 start_date 당일까지를 종료일로 본다.
+    """
+    from datetime import date as date_cls
+    from sqlalchemy import func as sa_func
+
+    if status_value not in ("ongoing", "ended"):
+        return None
+
+    today = date_cls.today()
+    # COALESCE(end_date, start_date): 종료일이 없으면 시작일을 종료일로 간주
+    effective_end = sa_func.coalesce(Festival.end_date, Festival.start_date)
+
+    if status_value == "ongoing":
+        return (
+            col(Festival.start_date).is_not(None)
+            & (col(Festival.start_date) <= today)
+            & (effective_end >= today)
+        )
+    # ended
+    return (
+        col(Festival.start_date).is_not(None)
+        & (effective_end < today)
+    )
 
 
 def _festival_name_contains(keyword: str):
