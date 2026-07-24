@@ -1,12 +1,11 @@
 :root {
-  /* 쨍한 비비드 팔레트 */
-  --primary: #4f46e5;         /* 인디고 */
-  --primary-strong: #4338ca;
-  --primary-soft: #eef2ff;
-  --accent: #ec4899;          /* 핑크 */
-  --accent-soft: #fce7f3;
-  --cyan: #06b6d4;
-  --amber: #f59e0b;
+  /* 선명한 초록 + 노랑 팔레트 (그라데이션 미사용) */
+  --primary: #16a34a;         /* 선명한 초록 */
+  --primary-strong: #15803d;
+  --primary-soft: #dcfce7;
+  --accent: #eab308;          /* 선명한 노랑 */
+  --accent-strong: #ca8a04;
+  --accent-soft: #fef9c3;
 
   --ink: #0f172a;             /* 진한 슬레이트 */
   --ink-soft: #475569;
@@ -16,11 +15,8 @@
   --border: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.16);
 
-  --grad: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
-  --grad-hover: linear-gradient(135deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
-
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 4px 12px rgba(79, 70, 229, 0.1), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 12px rgba(22, 163, 74, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 * {
@@ -36,10 +32,9 @@ body {
   margin: 0;
   font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   background:
-    radial-gradient(ellipse 70% 45% at 8% -8%, rgba(99, 102, 241, 0.28) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.22) 0%, transparent 52%),
-    radial-gradient(ellipse 80% 55% at 50% 110%, rgba(6, 182, 212, 0.18) 0%, transparent 55%),
-    #f6f7fd;
+    radial-gradient(ellipse 70% 45% at 8% -8%, rgba(22, 163, 74, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(234, 179, 8, 0.16) 0%, transparent 52%),
+    #f4f7f2;
   background-attachment: fixed;
   color: var(--ink);
   min-height: 100vh;
@@ -80,7 +75,7 @@ a {
 
 @media (max-width: 640px) {
   .app-main {
-    padding: 20px 16px 40px;
+    padding: 14px 16px 40px;
   }
 }
 
@@ -108,10 +103,7 @@ a {
   font-size: 1.3rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--primary);
 }
 
 .site-nav {
@@ -138,6 +130,16 @@ a {
   background: var(--primary);
 }
 
+/* ----- Fireworks (클릭 폭죽 효과) ----- */
+.fireworks-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  pointer-events: none; /* 클릭을 아래 요소로 통과시킨다 */
+}
+
 /* ----- Mobile bottom navigation ----- */
 .mobile-nav {
   display: none;
@@ -145,10 +147,9 @@ a {
 
 /* ----- Footer ----- */
 .site-footer {
-  border-top: 1px solid var(--border);
-  background: #0f172a;
-  color: #e2e8f0;
-  background-image: linear-gradient(90deg, rgba(99, 102, 241, 0.18), rgba(236, 72, 153, 0.12));
+  border-top: 3px solid var(--accent);
+  background: #14532d;
+  color: #e7f3ea;
 }
 
 .site-footer__inner {
@@ -244,8 +245,15 @@ a {
 }
 
 /* ----- Festival list / search ----- */
+/* 검색 영역을 콘텐츠와 확실히 구분되는 카드로 만든다 */
 .search-bar {
-  margin: 0 0 24px;
+  margin: 0 0 28px;
+  padding: 18px 20px;
+  background: var(--primary-soft);
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-left: 5px solid var(--primary);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .search-bar__filters {
@@ -311,17 +319,17 @@ a {
   padding: 12px 20px;
   border: none;
   border-radius: 12px;
-  background: var(--grad);
+  background: var(--primary);
   color: #fff;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: transform 0.12s ease, filter 0.15s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease, background 0.15s ease;
 }
 
 .search-bar__button:hover {
-  filter: brightness(1.05);
+  background: var(--primary-strong);
 }
 
 .search-bar__button:active {
@@ -413,7 +421,7 @@ a {
   top: 0;
   bottom: 0;
   width: 4px;
-  background: var(--grad);
+  background: var(--primary);
 }
 
 .festival-card:hover {
@@ -632,7 +640,7 @@ a {
 .favorite-button--active {
   background: var(--accent-soft);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-strong);
 }
 
 .favorite-button__icon {
@@ -658,12 +666,19 @@ a {
 }
 
 /* ----- Calendar page ----- */
+/* 컨트롤(검색) 영역을 콘텐츠와 구분되는 카드로 */
 .calendar-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 20px;
   align-items: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  background: var(--primary-soft);
+  border: 1px solid rgba(22, 163, 74, 0.25);
+  border-left: 5px solid var(--primary);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .calendar-controls__field {
@@ -968,12 +983,35 @@ a {
     padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
   }
 
+  /* 제목·안내 문구가 상단을 많이 차지하지 않도록 촘촘하게 */
   .page__title {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
+    margin: 0 0 4px;
+    line-height: 1.25;
   }
 
   .page__lead {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+
+  /* 상단 컨트롤(검색·달력)도 여백 축소 */
+  .search-bar {
+    margin-bottom: 16px;
+  }
+
+  .calendar-controls {
+    margin-bottom: 14px;
+  }
+
+  /* 상세 헤더: 제목 크게 차지하지 않게 + 기간 여백 축소 */
+  .detail-header {
+    margin-bottom: 4px;
+  }
+
+  .detail-header .detail-period {
+    margin-bottom: 12px;
   }
 
   /* ----- 하단 탭 내비게이션 ----- */
@@ -1008,7 +1046,7 @@ a {
 
   .mobile-nav__item.is-active {
     color: #fff;
-    background: var(--grad);
+    background: var(--primary);
   }
 
   .mobile-nav__icon {
@@ -1073,8 +1111,6 @@ a {
   .search-bar {
     padding: 14px;
     border-radius: 14px;
-    background: rgba(255, 253, 249, 0.92);
-    border: 1px solid rgba(28, 25, 23, 0.08);
   }
 
   .search-bar__field,
