@@ -443,6 +443,47 @@ a {
   flex: 1;
 }
 
+.detail-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+/* ----- Share ----- */
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(28, 25, 23, 0.16);
+  border-radius: 999px;
+  background: #fffdf9;
+  color: #57534e;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.share-button:hover {
+  border-color: rgba(29, 79, 99, 0.35);
+  color: #1d4f63;
+}
+
+.share-button--done {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+}
+
+.share-button__icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 /* ----- Favorites ----- */
 .favorite-button {
   display: inline-flex;

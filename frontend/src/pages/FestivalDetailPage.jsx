@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ApiError, fetchFestival } from '../api'
 import FestivalMap, { hasValidCoordinates } from '../components/FestivalMap'
 import FavoriteButton from '../components/FavoriteButton'
+import ShareButton from '../components/ShareButton'
 import { useFavorites } from '../hooks/useFavorites'
 
 const EMPTY = '정보 없음'
@@ -144,10 +145,16 @@ export default function FestivalDetailPage() {
               <h1 className="page__title">{displayText(festival.festival_name)}</h1>
               <p className="detail-period">{formatPeriod(festival.start_date, festival.end_date)}</p>
             </div>
-            <FavoriteButton
-              active={isFavorite(festival.id)}
-              onToggle={() => toggleFavorite(festival.id)}
-            />
+            <div className="detail-header__actions">
+              <ShareButton
+                title={festival.festival_name || '축제 정보'}
+                text={`${festival.festival_name || '축제'} 정보를 확인해 보세요.`}
+              />
+              <FavoriteButton
+                active={isFavorite(festival.id)}
+                onToggle={() => toggleFavorite(festival.id)}
+              />
+            </div>
           </div>
 
           <dl className="detail-grid">
