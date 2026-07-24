@@ -10,6 +10,8 @@
     → 브라우저에서 http://127.0.0.1:8000/health 로 확인
 """
 from contextlib import asynccontextmanager
+import logging
+import threading
 from typing import Annotated
 
 from fastapi import FastAPI, HTTPException, Query
@@ -20,11 +22,13 @@ from sqlmodel import Session, SQLModel, create_engine, col, func, select
 from models import Festival  # noqa: F401
 
 # .env 설정을 서버 기동 시점에 로드한다. (API 키는 config를 통해서만 접근)
-import config  # noqa: F401
+import config
 from db_schema import ensure_festival_schema
 from calendar_service import festivals_on_date, month_day_counts
 from public_api import PublicApiError
 from sync_service import sync_festivals
+
+logger = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------
 # [배선] DB 연결 (SQLite) — 이 부분은 그대로 두고, 아래에 모델만 추가하면 됩니다.
@@ -34,12 +38,61 @@ from sync_service import sync_festivals
 engine = create_engine("sqlite:///app.db", connect_args={"check_same_thread": False})
 
 
+def _festival_count() -> int:
+    """festivals 테이블 행 수를 반환한다."""
+    with Session(engine) as session:
+        return session.exec(select(func.count()).select_from(Festival)).one()
+
+
+def _sync_festivals_in_background() -> None:
+    """
+    공공데이터 sync를 백그라운드에서 실행한다.
+    실패해도 서버 기동은 유지한다 (로그로만 남김).
+    """
+    try:
+        with Session(engine) as session:
+            summary = sync_festivals(session)
+        logger.info("기동 시 자동 동기화 완료: %s", summary)
+    except Exception:
+        logger.exception("기동 시 자동 동기화 실패 — 서버는 계속 동작합니다.")
+
+
+def _maybe_start_startup_sync() -> None:
+    """
+    SYNC_ON_STARTUP 이고 DB가 비어 있으면 백그라운드 sync를 시작한다.
+    Render처럼 재배포 시 SQLite가 초기화되는 환경을 위한다.
+    """
+    if not config.SYNC_ON_STARTUP:
+        logger.info("SYNC_ON_STARTUP=false — 기동 시 자동 동기화를 건너뜁니다.")
+        return
+
+    try:
+        count = _festival_count()
+    except Exception:
+        logger.exception("축제 건수 조회 실패 — 기동 시 자동 동기화를 건너뜁니다.")
+        return
+
+    if count > 0:
+        logger.info("축제 %s건이 이미 있어 기동 시 자동 동기화를 건너뜁니다.", count)
+        return
+
+    logger.info("축제 DB가 비어 있어 기동 시 자동 동기화를 백그라운드에서 시작합니다.")
+    thread = threading.Thread(
+        target=_sync_festivals_in_background,
+        name="startup-festival-sync",
+        daemon=True,
+    )
+    thread.start()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 서버가 켜질 때, 정의된 모델들의 테이블을 자동으로 만든다.
     SQLModel.metadata.create_all(engine)
     # 기존 DB에 region 컬럼이 없으면 추가·백필
     ensure_festival_schema(engine)
+    # DB가 비어 있으면(배포 직후 등) 공공데이터 sync — 포트 바인딩을 막지 않도록 백그라운드
+    _maybe_start_startup_sync()
     yield
 
 

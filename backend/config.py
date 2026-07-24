@@ -31,6 +31,19 @@ def _optional(name: str, default: str) -> str:
     return value if value else default
 
 
+def _optional_bool(name: str, default: bool) -> bool:
+    """선택 bool 환경변수. true/1/yes 또는 false/0/no (대소문자 무시)."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    value = raw.strip().lower()
+    if value in ("true", "1", "yes"):
+        return True
+    if value in ("false", "0", "no"):
+        return False
+    return default
+
+
 # 공공데이터 API 설정 (.env / .env.example 키 이름과 동일)
 FESTIVAL_API_KEY: str = _require("FESTIVAL_API_KEY")
 FESTIVAL_API_BASE_URL: str = _optional(
@@ -39,3 +52,6 @@ FESTIVAL_API_BASE_URL: str = _optional(
 )
 FESTIVAL_API_TYPE: str = _optional("FESTIVAL_API_TYPE", "json")
 FESTIVAL_API_NUM_OF_ROWS: int = int(_optional("FESTIVAL_API_NUM_OF_ROWS", "100"))
+
+# 기동 시 festivals 테이블이 비어 있으면 공공데이터 sync (Render 재배포용)
+SYNC_ON_STARTUP: bool = _optional_bool("SYNC_ON_STARTUP", True)
