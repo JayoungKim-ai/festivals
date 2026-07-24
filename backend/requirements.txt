@@ -3,6 +3,7 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 
 # 아래는 데이터 저장·API 연동을 붙일 때 쓰는 것들 (미리 설치해 두면 편함)
-sqlmodel==0.0.22
+# 0.0.27+ : Python 3.14(PEP 649) 어노테이션 호환. 미지원 시 Field 'id' requires a type annotation 발생
+sqlmodel==0.0.39
 requests==2.32.3
 python-dotenv==1.0.1
