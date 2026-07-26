@@ -383,6 +383,32 @@ a {
   font-size: 0.85rem;
 }
 
+/* 월 축제 건수 클릭 → 날짜 선택 해제(월 전체 보기) */
+.result-count__action {
+  display: inline;
+  margin: 0;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.result-count__action:hover {
+  background: var(--primary-soft);
+}
+
+.result-count__action--active {
+  border-color: rgba(79, 70, 229, 0.35);
+  background: var(--primary-soft);
+  text-decoration: none;
+}
+
 /* ----- Pagination ----- */
 .pagination {
   display: flex;

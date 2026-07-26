@@ -57,7 +57,9 @@ function buildCalendarCells(year, month) {
 }
 
 /**
- * 일자별·지역별 검색 — 달력 + 선택일 지도·목록
+ * 일자별·지역별 검색 — 달력 + 월/선택일 지도·목록
+ * - 날짜 미선택: 해당 월 축제 기준
+ * - 날짜 선택: 해당 일 축제 기준 (다시 누르면 월 보기로 복귀)
  */
 export default function CalendarPage() {
   const today = useMemo(() => new Date(), [])
@@ -66,6 +68,8 @@ export default function CalendarPage() {
   const [region, setRegion] = useState('')
   const [regions, setRegions] = useState([])
   const [countsByDate, setCountsByDate] = useState({})
+  const [monthFestivalTotal, setMonthFestivalTotal] = useState(0)
+  const [monthItems, setMonthItems] = useState([])
   const [selectedDate, setSelectedDate] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ok | empty | error
   const [errorMessage, setErrorMessage] = useState('')
@@ -75,14 +79,23 @@ export default function CalendarPage() {
   const [dayError, setDayError] = useState('')
 
   const cells = useMemo(() => buildCalendarCells(year, month), [year, month])
-  const monthTotal = useMemo(
-    () => Object.values(countsByDate).reduce((sum, n) => sum + n, 0),
-    [countsByDate],
-  )
+
+  // 날짜 미선택이면 월 목록, 선택하면 해당일 목록
+  const panelItems = selectedDate ? dayItems : monthItems
+  const panelStatus = selectedDate
+    ? dayStatus
+    : status === 'loading'
+      ? 'loading'
+      : status === 'error'
+        ? 'error'
+        : monthItems.length === 0
+          ? 'empty'
+          : 'ok'
+  const panelError = selectedDate ? dayError : errorMessage
 
   const mappedFestivals = useMemo(
-    () => dayItems.filter((f) => hasValidCoordinates(f.latitude, f.longitude)),
-    [dayItems],
+    () => panelItems.filter((f) => hasValidCoordinates(f.latitude, f.longitude)),
+    [panelItems],
   )
 
   useEffect(() => {
@@ -91,7 +104,7 @@ export default function CalendarPage() {
       .catch(() => setRegions([]))
   }, [])
 
-  // 월·지역 변경 → 달력 건수
+  // 월·지역 변경 → 달력 건수 + 월 축제 목록
   useEffect(() => {
     let cancelled = false
 
@@ -101,6 +114,7 @@ export default function CalendarPage() {
       setSelectedDate(null)
       setDayItems([])
       setDayStatus('idle')
+      setMonthItems([])
 
       try {
         const data = await fetchFestivalCalendar({ year, month, region })
@@ -112,11 +126,18 @@ export default function CalendarPage() {
         }
         setCountsByDate(map)
 
-        const total = (data.days || []).reduce((sum, d) => sum + (d.count || 0), 0)
-        setStatus(total === 0 ? 'empty' : 'ok')
+        const list = Array.isArray(data.items) ? data.items : []
+        setMonthItems(list)
+
+        const festivalTotal =
+          typeof data.total === 'number' ? data.total : list.length
+        setMonthFestivalTotal(festivalTotal)
+        setStatus(festivalTotal === 0 ? 'empty' : 'ok')
       } catch (err) {
         if (cancelled) return
         setCountsByDate({})
+        setMonthFestivalTotal(0)
+        setMonthItems([])
         setStatus('error')
         setErrorMessage(
           err instanceof ApiError
@@ -192,12 +213,21 @@ export default function CalendarPage() {
     }
   }
 
+  /** 같은 날짜를 다시 누르면 선택 해제 → 월 전체 보기로 돌아감 */
+  function handleDayClick(dateKey) {
+    setSelectedDate((prev) => (prev === dateKey ? null : dateKey))
+  }
+
+  const panelTitle = selectedDate
+    ? `${formatDateLabel(selectedDate)} 축제`
+    : `${year}년 ${month}월 축제`
+
   return (
     <section className="page calendar-page">
       <h1 className="page__title">일자별 · 지역별 검색</h1>
       <p className="page__lead">
-        월을 고르면 달력에 일자별 축제 수가 표시됩니다. 날짜를 누르면 해당 날의 지도와 목록을
-        볼 수 있습니다.
+        월을 고르면 달력과 함께 해당 월의 축제 지도·목록이 표시됩니다. 날짜를 누르면 그날
+        축제로 좁혀 볼 수 있습니다.
       </p>
 
       <div className="calendar-controls">
@@ -261,7 +291,19 @@ export default function CalendarPage() {
             {year}년 {month}월
             {region ? ` · ${region}` : ' · 전체 지역'}
             {' — '}
-            축제 일정 {monthTotal.toLocaleString()}건
+            <button
+              type="button"
+              className={
+                selectedDate
+                  ? 'result-count__action'
+                  : 'result-count__action result-count__action--active'
+              }
+              onClick={() => setSelectedDate(null)}
+              aria-pressed={!selectedDate}
+              title="이 달의 모든 축제 보기"
+            >
+              축제 {monthFestivalTotal.toLocaleString()}건
+            </button>
             {status === 'empty' && ' (이 달에는 표시할 축제가 없습니다)'}
           </p>
 
@@ -296,7 +338,7 @@ export default function CalendarPage() {
                   key={cell.key}
                   type="button"
                   className={classNames}
-                  onClick={() => setSelectedDate(cell.date)}
+                  onClick={() => handleDayClick(cell.date)}
                   aria-pressed={isSelected}
                   aria-label={`${cell.date}, 축제 ${count}건`}
                 >
@@ -310,95 +352,98 @@ export default function CalendarPage() {
           </div>
 
           <div className="calendar-day-panel">
-            {!selectedDate && (
-              <p className="calendar-selection__text calendar-selection__text--muted">
-                날짜를 선택하면 해당 날의 축제 지도와 목록을 볼 수 있습니다.
+            <h2 className="calendar-day-panel__title">
+              {panelTitle}
+              {region ? ` · ${region}` : ''}
+              {!selectedDate && (
+                <span className="result-count__hint"> · 날짜를 누르면 해당 일만 볼 수 있습니다</span>
+              )}
+              {selectedDate && (
+                <span className="result-count__hint"> · 같은 날짜를 다시 누르면 월 전체로 돌아갑니다</span>
+              )}
+            </h2>
+
+            {panelStatus === 'loading' && (
+              <p className="state-message" role="status">
+                {selectedDate
+                  ? '선택한 날짜의 축제를 불러오는 중…'
+                  : '이 달의 축제를 불러오는 중…'}
               </p>
             )}
 
-            {selectedDate && (
+            {panelStatus === 'error' && (
+              <div className="state-box state-box--error" role="alert">
+                <p className="state-box__title">오류가 발생했습니다</p>
+                <p className="state-box__body">{panelError}</p>
+              </div>
+            )}
+
+            {panelStatus === 'empty' && (
+              <p className="state-message" role="status">
+                {selectedDate
+                  ? '이 날짜에 해당하는 축제가 없습니다.'
+                  : '이 달에 해당하는 축제가 없습니다.'}
+              </p>
+            )}
+
+            {panelStatus === 'ok' && (
               <>
-                <h2 className="calendar-day-panel__title">
-                  {formatDateLabel(selectedDate)} 축제
-                  {region ? ` · ${region}` : ''}
-                </h2>
-
-                {dayStatus === 'loading' && (
-                  <p className="state-message" role="status">
-                    선택한 날짜의 축제를 불러오는 중…
-                  </p>
-                )}
-
-                {dayStatus === 'error' && (
-                  <div className="state-box state-box--error" role="alert">
-                    <p className="state-box__title">오류가 발생했습니다</p>
-                    <p className="state-box__body">{dayError}</p>
-                  </div>
-                )}
-
-                {dayStatus === 'empty' && (
-                  <p className="state-message" role="status">
-                    이 날짜에 해당하는 축제가 없습니다.
-                  </p>
-                )}
-
-                {dayStatus === 'ok' && (
-                  <>
-                    <section className="calendar-day-map" aria-label="선택일 축제 지도">
-                      {mappedFestivals.length > 0 ? (
-                        <FestivalsMap festivals={mappedFestivals} />
-                      ) : (
-                        <p className="state-message">
-                          위치 좌표가 있는 축제가 없어 지도를 표시할 수 없습니다.
-                          {dayItems.length > 0 &&
-                            ` (목록 ${dayItems.length}건은 아래에 표시됩니다)`}
-                        </p>
-                      )}
-                    </section>
-
-                    <p className="result-count">
-                      총 {dayItems.length.toLocaleString()}건
-                      {mappedFestivals.length < dayItems.length && (
-                        <span className="result-count__hint">
-                          {' '}
-                          · 지도 마커 {mappedFestivals.length}곳
-                        </span>
-                      )}
+                <section
+                  className="calendar-day-map"
+                  aria-label={selectedDate ? '선택일 축제 지도' : '이 달 축제 지도'}
+                >
+                  {mappedFestivals.length > 0 ? (
+                    <FestivalsMap festivals={mappedFestivals} />
+                  ) : (
+                    <p className="state-message">
+                      위치 좌표가 있는 축제가 없어 지도를 표시할 수 없습니다.
+                      {panelItems.length > 0 &&
+                        ` (목록 ${panelItems.length}건은 아래에 표시됩니다)`}
                     </p>
+                  )}
+                </section>
 
-                    <ul className="festival-list">
-                      {dayItems.map((festival) => (
-                        <li key={festival.id} className="festival-card">
-                          <div className="festival-card__body">
-                            <h2 className="festival-card__title">{festival.festival_name}</h2>
-                            <dl className="festival-card__meta">
-                              <div>
-                                <dt>개최기간</dt>
-                                <dd>
-                                  {formatPeriod(festival.start_date, festival.end_date)}
-                                </dd>
-                              </div>
-                              <div>
-                                <dt>개최장소</dt>
-                                <dd>{festival.location || '정보 없음'}</dd>
-                              </div>
-                              <div>
-                                <dt>지역</dt>
-                                <dd>{festival.region || '정보 없음'}</dd>
-                              </div>
-                            </dl>
+                <p className="result-count">
+                  총 {panelItems.length.toLocaleString()}건
+                  {mappedFestivals.length < panelItems.length && (
+                    <span className="result-count__hint">
+                      {' '}
+                      · 지도 마커 {mappedFestivals.length}곳
+                    </span>
+                  )}
+                </p>
+
+                <ul className="festival-list">
+                  {panelItems.map((festival) => (
+                    <li key={festival.id} className="festival-card">
+                      <div className="festival-card__body">
+                        <h2 className="festival-card__title">{festival.festival_name}</h2>
+                        <dl className="festival-card__meta">
+                          <div>
+                            <dt>개최기간</dt>
+                            <dd>
+                              {formatPeriod(festival.start_date, festival.end_date)}
+                            </dd>
                           </div>
-                          <Link
-                            className="festival-card__link"
-                            to={`/festivals/${festival.id}`}
-                          >
-                            상세 보기
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
+                          <div>
+                            <dt>개최장소</dt>
+                            <dd>{festival.location || '정보 없음'}</dd>
+                          </div>
+                          <div>
+                            <dt>지역</dt>
+                            <dd>{festival.region || '정보 없음'}</dd>
+                          </div>
+                        </dl>
+                      </div>
+                      <Link
+                        className="festival-card__link"
+                        to={`/festivals/${festival.id}`}
+                      >
+                        상세 보기
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </>
             )}
           </div>

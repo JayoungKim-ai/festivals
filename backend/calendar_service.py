@@ -24,13 +24,15 @@ def month_day_counts(
     region: str | None = None,
 ) -> dict[str, Any]:
     """
-    해당 월의 각 날짜별 축제 건수를 집계한다.
+    해당 월의 각 날짜별 축제 건수와, 월에 겹치는 축제 목록을 반환한다.
 
     Returns:
         {
           "year": 2026,
           "month": 4,
           "region": "서울특별시" | null,
+          "total": 12,
+          "items": [Festival, ...],
           "days": [{"date": "2026-04-01", "count": 2}, ...]
         }
     """
@@ -62,10 +64,21 @@ def month_day_counts(
             counts[day] += 1
             day += timedelta(days=1)
 
+    # 월 목록용 정렬: 시작일 → 이름
+    festivals.sort(
+        key=lambda f: (
+            f.start_date or date.max,
+            f.festival_name or "",
+        )
+    )
+
     return {
         "year": year,
         "month": month,
         "region": region,
+        # 해당 월과 기간이 겹치는 축제 수 (일자별 count 합이 아님)
+        "total": len(festivals),
+        "items": festivals,
         "days": [
             {"date": day.isoformat(), "count": counts[day]}
             for day in sorted(counts.keys())

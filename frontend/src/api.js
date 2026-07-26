@@ -5,12 +5,10 @@
 // API 주소 우선순위:
 // 1) VITE_API_BASE_URL (로컬 .env / Vercel Environment Variables)
 // 2) 프로덕션 빌드면 Render 백엔드
-// 3) 로컬 개발이면 127.0.0.1:8000
+// 3) 로컬 개발이면 빈 주소(같은 origin) → vite.config.js proxy 가 백엔드로 전달
 const BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD
-    ? 'https://festivals-nmj9.onrender.com'
-    : 'http://127.0.0.1:8000')
+  (import.meta.env.PROD ? 'https://festivals-nmj9.onrender.com' : '')
 ).replace(/\/$/, '')
 
 /** Render Free 콜드스타트·네트워크 지연을 고려한 대기 시간(ms) */
@@ -133,7 +131,7 @@ export async function fetchFestival(festivalId) {
 }
 
 /**
- * 월별 일자별 축제 건수
+ * 월별 일자별 축제 건수 + 해당 월 축제 목록
  * @param {{ year: number, month: number, region?: string }} params
  */
 export async function fetchFestivalCalendar({ year, month, region = '' } = {}) {

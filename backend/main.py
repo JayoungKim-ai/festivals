@@ -180,11 +180,33 @@ def list_festivals(
 
         total = session.exec(count_stmt).one()
         offset = (page - 1) * size
-        items = session.exec(
-            base_stmt.order_by(
+        # 탭별 정렬:
+        # - ongoing: 종료일(없으면 시작일) 오름차순 — 곧 끝나는 축제부터
+        # - upcoming: 시작일 오름차순 — 가까운 예정부터
+        # - ended: 시작일 내림차순 — 최근 종료가 위
+        # - 전체: 시작일 오름차순
+        from sqlalchemy import func as sa_func
+
+        if status_value == "ongoing":
+            effective_end = sa_func.coalesce(Festival.end_date, Festival.start_date)
+            order_clause = (effective_end.asc(), col(Festival.id).asc())
+        elif status_value == "upcoming":
+            order_clause = (
+                col(Festival.start_date).asc(),
+                col(Festival.id).asc(),
+            )
+        elif status_value == "ended":
+            order_clause = (
                 col(Festival.start_date).desc(),
                 col(Festival.id).desc(),
             )
+        else:
+            order_clause = (
+                col(Festival.start_date).asc(),
+                col(Festival.id).asc(),
+            )
+        items = session.exec(
+            base_stmt.order_by(*order_clause)
             .offset(offset)
             .limit(size)
         ).all()
@@ -224,7 +246,7 @@ def festival_calendar(
     ] = None,
 ):
     """
-    선택한 월의 일자별 축제 건수를 반환한다.
+    선택한 월의 일자별 축제 건수와, 해당 월에 기간이 겹치는 축제 목록을 반환한다.
     각 날짜에 대해 start_date~end_date 구간에 포함되는 축제를 센다.
     """
     region_name = (region or "").strip() or None
