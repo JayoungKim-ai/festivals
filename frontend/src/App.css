@@ -514,8 +514,39 @@ a {
   margin-bottom: 10px;
 }
 
+.festival-card__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
 .festival-card__heading .festival-card__title {
   margin: 0;
+}
+
+.festival-card__remaining {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.festival-card__remaining--ongoing {
+  color: var(--primary-strong);
+  background: var(--primary-soft);
+}
+
+.festival-card__remaining--upcoming {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 .festival-card__meta {
