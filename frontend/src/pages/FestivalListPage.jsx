@@ -35,6 +35,46 @@ function formatPeriod(startDate, endDate) {
   return '정보 없음'
 }
 
+/** YYYY-MM-DD → 로컬 Date (시각 00:00) */
+function parseDateOnly(value) {
+  if (!value) return null
+  const text = String(value).slice(0, 10)
+  const [y, m, d] = text.split('-').map(Number)
+  if (!y || !m || !d) return null
+  return new Date(y, m - 1, d)
+}
+
+/** 오늘(로컬)부터 target 까지 남은 일수 (당일=0) */
+function daysUntil(targetValue) {
+  const target = parseDateOnly(targetValue)
+  if (!target) return null
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const diffMs = target.getTime() - today.getTime()
+  return Math.round(diffMs / (24 * 60 * 60 * 1000))
+}
+
+/**
+ * 진행중: 종료일까지 남은 기간 / 예정: 시작일까지 남은 기간
+ * @returns {string|null}
+ */
+function formatRemainingPeriod(statusValue, festival) {
+  if (statusValue === 'ongoing') {
+    // 종료일 없으면 시작일 당일까지로 본다 (백엔드와 동일)
+    const days = daysUntil(festival.end_date || festival.start_date)
+    if (days === null || days < 0) return null
+    if (days === 0) return '오늘 종료'
+    return `종료까지 ${days}일`
+  }
+  if (statusValue === 'upcoming') {
+    const days = daysUntil(festival.start_date)
+    if (days === null || days < 0) return null
+    if (days === 0) return '오늘 시작'
+    return `시작까지 ${days}일`
+  }
+  return null
+}
+
 /** 주소 일부 표시 (도로명 우선, 없으면 지번) */
 function formatAddress(festival) {
   const address = festival.road_address || festival.parcel_address
@@ -265,11 +305,22 @@ export default function FestivalListPage() {
           </p>
 
           <ul className="festival-list">
-            {items.map((festival) => (
+            {items.map((festival) => {
+              const remaining = formatRemainingPeriod(statusTab, festival)
+              return (
               <li key={festival.id} className="festival-card">
                 <div className="festival-card__body">
                   <div className="festival-card__heading">
-                    <h2 className="festival-card__title">{festival.festival_name}</h2>
+                    <div className="festival-card__title-row">
+                      <h2 className="festival-card__title">{festival.festival_name}</h2>
+                      {remaining && (
+                        <span
+                          className={`festival-card__remaining festival-card__remaining--${statusTab}`}
+                        >
+                          {remaining}
+                        </span>
+                      )}
+                    </div>
                     <FavoriteButton
                       compact
                       active={isFavorite(festival.id)}
@@ -295,7 +346,8 @@ export default function FestivalListPage() {
                   상세 보기
                 </Link>
               </li>
-            ))}
+              )
+            })}
           </ul>
 
           {totalPages > 1 && (
