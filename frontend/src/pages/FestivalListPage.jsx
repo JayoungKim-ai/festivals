@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { ApiError, fetchFestivals, fetchRegions } from '../api'
-import FavoriteButton from '../components/FavoriteButton'
+import FestivalCard from '../components/FestivalCard'
+import FestivalListSkeleton from '../components/FestivalListSkeleton'
 import { useFavorites } from '../hooks/useFavorites'
 
 /** 한 페이지에 표시할 축제 수 (N-1) */
@@ -18,76 +18,22 @@ const STATUS_TABS = [
 /** 기본 선택 탭: 진행중 */
 const DEFAULT_STATUS = 'ongoing'
 
-/** 날짜를 PRD 형식으로 표시 (YYYY.MM.DD) */
-function formatDate(value) {
-  if (!value) return null
-  const text = String(value).slice(0, 10)
-  return text.replaceAll('-', '.')
-}
-
-/** 개최기간 문자열 */
-function formatPeriod(startDate, endDate) {
-  const start = formatDate(startDate)
-  const end = formatDate(endDate)
-  if (start && end) return `${start} ~ ${end}`
-  if (start) return start
-  if (end) return end
-  return '정보 없음'
-}
-
-/** YYYY-MM-DD → 로컬 Date (시각 00:00) */
-function parseDateOnly(value) {
-  if (!value) return null
-  const text = String(value).slice(0, 10)
-  const [y, m, d] = text.split('-').map(Number)
-  if (!y || !m || !d) return null
-  return new Date(y, m - 1, d)
-}
-
-/** 오늘(로컬)부터 target 까지 남은 일수 (당일=0) */
-function daysUntil(targetValue) {
-  const target = parseDateOnly(targetValue)
-  if (!target) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const diffMs = target.getTime() - today.getTime()
-  return Math.round(diffMs / (24 * 60 * 60 * 1000))
-}
-
-/**
- * 진행중: 종료일까지 남은 기간 / 예정: 시작일까지 남은 기간
- * @returns {string|null}
- */
-function formatRemainingPeriod(statusValue, festival) {
-  if (statusValue === 'ongoing') {
-    // 종료일 없으면 시작일 당일까지로 본다 (백엔드와 동일)
-    const days = daysUntil(festival.end_date || festival.start_date)
-    if (days === null || days < 0) return null
-    if (days === 0) return '오늘 종료'
-    return `종료까지 ${days}일`
-  }
-  if (statusValue === 'upcoming') {
-    const days = daysUntil(festival.start_date)
-    if (days === null || days < 0) return null
-    if (days === 0) return '오늘 시작'
-    return `시작까지 ${days}일`
-  }
-  return null
-}
-
-/** 주소 일부 표시 (도로명 우선, 없으면 지번) */
-function formatAddress(festival) {
-  const address = festival.road_address || festival.parcel_address
-  if (!address) return '정보 없음'
-  return address.length > 40 ? `${address.slice(0, 40)}…` : address
-}
-
 function buildResultLabel(search, region, total) {
   const parts = []
   if (search) parts.push(`"${search}"`)
   if (region) parts.push(region)
   if (parts.length === 0) return `전체 ${total.toLocaleString()}건`
   return `${parts.join(' · ')} 검색 결과 ${total.toLocaleString()}건`
+}
+
+/** 결과 없음 안내에 쓸 현재 조건 문구 (예: "불꽃" · 서울특별시 · 진행중) */
+function buildEmptyConditionLabel(search, region, statusValue) {
+  const parts = []
+  if (search) parts.push(`"${search}"`)
+  if (region) parts.push(region)
+  const tab = STATUS_TABS.find((item) => item.value === statusValue)
+  if (statusValue && tab) parts.push(tab.label)
+  return parts.length > 0 ? parts.join(' · ') : '현재'
 }
 
 /** 현재 페이지에 해당하는 건수 범위 문구 (예: 1–10번째) */
@@ -116,6 +62,7 @@ export default function FestivalListPage() {
   const [total, setTotal] = useState(0)
   const [status, setStatus] = useState('loading') // loading | ok | empty | error
   const [errorMessage, setErrorMessage] = useState('')
+  const [ongoingCount, setOngoingCount] = useState(null)
 
   const totalPages = Math.max(1, Math.ceil(total / LIST_SIZE))
 
@@ -163,6 +110,12 @@ export default function FestivalListPage() {
       .catch(() => {
         setRegions([])
       })
+    // 히어로에 보여줄 "지금 진행중인 축제" 수 (검색 조건과 무관한 전국 기준)
+    fetchFestivals({ page: 1, size: 1, status: 'ongoing' })
+      .then((data) => {
+        if (typeof data.total === 'number') setOngoingCount(data.total)
+      })
+      .catch(() => {})
     // 초기 로드는 기본 탭(진행중) 기준
     loadFestivals('', '', 1, DEFAULT_STATUS)
   }, [])
@@ -173,6 +126,16 @@ export default function FestivalListPage() {
     setPage(1)
     // 탭 변경 시 현재 검색어·지역을 유지한 채 1페이지부터 다시 조회
     loadFestivals(appliedSearch, appliedRegion, 1, nextStatus)
+  }
+
+  /** 검색어·지역을 입력창과 적용값에 함께 반영하고 1페이지부터 다시 조회 */
+  function applyFilters(keyword, regionName) {
+    setInput(keyword)
+    setRegion(regionName)
+    setAppliedSearch(keyword)
+    setAppliedRegion(regionName)
+    setPage(1)
+    loadFestivals(keyword, regionName, 1)
   }
 
   function handleSearch(event) {
@@ -205,10 +168,82 @@ export default function FestivalListPage() {
 
   return (
     <section className="page festival-list-page">
-      <h1 className="page__title">축제 찾기</h1>
-      <p className="page__lead">
-        축제 이름과 지역으로 검색하거나, 목록에서 관심 있는 축제를 골라 상세 정보를 확인하세요.
-      </p>
+      <div className="festival-hero">
+        <svg className="festival-hero__burst" viewBox="0 0 200 200" aria-hidden="true">
+          <g strokeLinecap="round" strokeWidth="3">
+            {Array.from({ length: 16 }, (_, i) => {
+              const angle = (i / 16) * Math.PI * 2
+              const inner = i % 2 === 0 ? 26 : 38
+              const outer = i % 2 === 0 ? 86 : 66
+              return (
+                <line
+                  key={i}
+                  x1={100 + Math.cos(angle) * inner}
+                  y1={100 + Math.sin(angle) * inner}
+                  x2={100 + Math.cos(angle) * outer}
+                  y2={100 + Math.sin(angle) * outer}
+                  stroke={i % 2 === 0 ? '#fbbf24' : '#f472b6'}
+                />
+              )
+            })}
+          </g>
+        </svg>
+        <p className="festival-hero__eyebrow">✦ 전국 축제 한눈에</p>
+        <h1 className="festival-hero__title">오늘, 어떤 축제 보러 갈까요?</h1>
+        <p className="festival-hero__stat">
+          {ongoingCount === null ? (
+            '지금 열리고 있는 축제를 확인해 보세요'
+          ) : (
+            <>
+              지금 전국에서 <strong>{ongoingCount.toLocaleString()}개</strong>의 축제가 열리고
+              있어요
+            </>
+          )}
+        </p>
+
+        <form className="search-bar" onSubmit={handleSearch} role="search">
+          <div className="search-bar__filters">
+            <div className="search-bar__field">
+              <label className="search-bar__label" htmlFor="festival-region">
+                지역
+              </label>
+              <select
+                id="festival-region"
+                className="search-bar__select"
+                value={region}
+                onChange={handleRegionChange}
+              >
+                <option value="">전체 지역</option>
+                {regions.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="search-bar__field search-bar__field--grow">
+              <label className="search-bar__label" htmlFor="festival-search">
+                축제명 검색
+              </label>
+              <div className="search-bar__row">
+                <input
+                  id="festival-search"
+                  className="search-bar__input"
+                  type="search"
+                  placeholder="예: 불꽃축제, 벚꽃축제"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  autoComplete="off"
+                />
+                <button className="search-bar__button" type="submit">
+                  검색
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
 
       <div className="status-tabs" role="tablist" aria-label="축제 진행 상태">
         {STATUS_TABS.map((tab) => (
@@ -225,53 +260,12 @@ export default function FestivalListPage() {
         ))}
       </div>
 
-      <form className="search-bar" onSubmit={handleSearch} role="search">
-        <div className="search-bar__filters">
-          <div className="search-bar__field">
-            <label className="search-bar__label" htmlFor="festival-region">
-              지역
-            </label>
-            <select
-              id="festival-region"
-              className="search-bar__select"
-              value={region}
-              onChange={handleRegionChange}
-            >
-              <option value="">전체 지역</option>
-              {regions.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="search-bar__field search-bar__field--grow">
-            <label className="search-bar__label" htmlFor="festival-search">
-              축제명 검색
-            </label>
-            <div className="search-bar__row">
-              <input
-                id="festival-search"
-                className="search-bar__input"
-                type="search"
-                placeholder="예: 불꽃축제, 벚꽃축제"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                autoComplete="off"
-              />
-              <button className="search-bar__button" type="submit">
-                검색
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-
       {status === 'loading' && (
-        <p className="state-message" role="status">
-          축제 목록을 불러오는 중… (처음이면 서버 기동에 최대 1분 정도 걸릴 수 있어요)
-        </p>
+        <FestivalListSkeleton
+          count={5}
+          label="축제 목록을 불러오는 중…"
+          slowHint="서버를 깨우는 중이에요. 처음 접속하면 최대 1분 정도 걸릴 수 있어요."
+        />
       )}
 
       {status === 'error' && (
@@ -289,9 +283,42 @@ export default function FestivalListPage() {
       )}
 
       {status === 'empty' && (
-        <p className="state-message" role="status">
-          검색 결과가 없습니다
-        </p>
+        <div className="empty-state" role="status">
+          <p className="empty-state__title">조건에 맞는 축제가 없어요</p>
+          <p className="empty-state__body">
+            {buildEmptyConditionLabel(appliedSearch, appliedRegion, statusTab)}
+            {' '}조건으로 찾은 결과가 없습니다. 조건을 넓혀 보세요.
+          </p>
+          <div className="empty-state__actions">
+            {statusTab !== '' && (
+              <button
+                type="button"
+                className="empty-state__button empty-state__button--primary"
+                onClick={() => handleStatusChange('')}
+              >
+                전체 기간에서 찾기
+              </button>
+            )}
+            {appliedRegion && (
+              <button
+                type="button"
+                className="empty-state__button"
+                onClick={() => applyFilters(appliedSearch, '')}
+              >
+                전체 지역에서 찾기
+              </button>
+            )}
+            {(appliedSearch || appliedRegion) && (
+              <button
+                type="button"
+                className="empty-state__button"
+                onClick={() => applyFilters('', '')}
+              >
+                검색 조건 초기화
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {status === 'ok' && (
@@ -305,49 +332,16 @@ export default function FestivalListPage() {
           </p>
 
           <ul className="festival-list">
-            {items.map((festival) => {
-              const remaining = formatRemainingPeriod(statusTab, festival)
-              return (
-              <li key={festival.id} className="festival-card">
-                <div className="festival-card__body">
-                  <div className="festival-card__heading">
-                    <div className="festival-card__title-row">
-                      <h2 className="festival-card__title">{festival.festival_name}</h2>
-                      {remaining && (
-                        <span
-                          className={`festival-card__remaining festival-card__remaining--${statusTab}`}
-                        >
-                          {remaining}
-                        </span>
-                      )}
-                    </div>
-                    <FavoriteButton
-                      compact
-                      active={isFavorite(festival.id)}
-                      onToggle={() => toggleFavorite(festival.id)}
-                    />
-                  </div>
-                  <dl className="festival-card__meta">
-                    <div>
-                      <dt>개최기간</dt>
-                      <dd>{formatPeriod(festival.start_date, festival.end_date)}</dd>
-                    </div>
-                    <div>
-                      <dt>개최장소</dt>
-                      <dd>{festival.location || '정보 없음'}</dd>
-                    </div>
-                    <div>
-                      <dt>주소</dt>
-                      <dd>{formatAddress(festival)}</dd>
-                    </div>
-                  </dl>
-                </div>
-                <Link className="festival-card__link" to={`/festivals/${festival.id}`}>
-                  상세 보기
-                </Link>
-              </li>
-              )
-            })}
+            {items.map((festival) => (
+              <FestivalCard
+                key={festival.id}
+                festival={festival}
+                favorite={{
+                  active: isFavorite(festival.id),
+                  onToggle: () => toggleFavorite(festival.id),
+                }}
+              />
+            ))}
           </ul>
 
           {totalPages > 1 && (
