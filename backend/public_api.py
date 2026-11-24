@@ -176,14 +176,16 @@ def _request_festival_page(
             timeout=timeout,
         )
         response.raise_for_status()
+    # 주의: requests 예외 원문(str(exc))에는 serviceKey 가 든 요청 URL 이 포함된다.
+    # 이 메시지는 API 응답(/api/festivals/sync)으로도 나가므로 원문 대신 예외 종류만 남긴다.
     except requests.Timeout as exc:
         raise PublicApiError(
-            f"공공데이터 API 요청 타임아웃 (page={page_no}): {exc}",
+            f"공공데이터 API 요청 타임아웃 (page={page_no}, {type(exc).__name__})",
             retryable=True,
         ) from exc
     except requests.ConnectionError as exc:
         raise PublicApiError(
-            f"공공데이터 API 연결 실패 (page={page_no}): {exc}",
+            f"공공데이터 API 연결 실패 (page={page_no}, {type(exc).__name__})",
             retryable=True,
         ) from exc
     except requests.HTTPError as exc:
@@ -191,12 +193,12 @@ def _request_festival_page(
         # 5xx는 일시적 장애로 재시도, 4xx는 재시도하지 않음
         retryable = status is not None and status >= 500
         raise PublicApiError(
-            f"공공데이터 API HTTP 오류 (page={page_no}, status={status}): {exc}",
+            f"공공데이터 API HTTP 오류 (page={page_no}, status={status})",
             retryable=retryable,
         ) from exc
     except requests.RequestException as exc:
         raise PublicApiError(
-            f"공공데이터 API HTTP 요청 실패 (page={page_no}): {exc}",
+            f"공공데이터 API HTTP 요청 실패 (page={page_no}, {type(exc).__name__})",
             retryable=True,
         ) from exc
 
