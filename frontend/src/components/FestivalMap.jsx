@@ -8,7 +8,6 @@ import 'leaflet/dist/leaflet.css'
 /**
  * 지도 타일: OpenStreetMap (API 키 불필요, 한글 지명 표시)
  * - CARTO 등 다른 무료 타일은 이제 API 키가 필요해 사용하지 않는다.
- * - 테마와 어울리도록 채도를 낮추는 보정은 App.css 의 .leaflet-tile-pane 필터에서 한다.
  */
 const TILE = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -97,12 +96,17 @@ export default function FestivalMap({ latitude, longitude, name }) {
 
   return (
     <div className="festival-map">
+      {/* 축제 하나 보기: 확대·축소만 허용, 지도는 항상 축제 위치를 가운데에 둔다 */}
       <MapContainer
         center={position}
         zoom={14}
+        dragging={false}
         scrollWheelZoom={false}
-        dragging={isMousePointer()}
-        touchZoom={true}
+        // 두 손가락·더블클릭 확대도 누른 곳이 아니라 가운데(축제 위치) 기준
+        touchZoom="center"
+        doubleClickZoom="center"
+        // 키보드 +/- 확대는 두고 방향키 이동만 막는다
+        keyboardPanDelta={0}
         className="festival-map__canvas"
       >
         <FestivalTileLayer />

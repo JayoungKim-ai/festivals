@@ -7,7 +7,9 @@ import {
 } from '../api'
 import FestivalCard from '../components/FestivalCard'
 import FestivalListSkeleton from '../components/FestivalListSkeleton'
+import RegionChips from '../components/RegionChips'
 import { FestivalsMap, hasValidCoordinates } from '../components/FestivalMap'
+import { formatRegionList } from '../regions'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -57,8 +59,11 @@ export default function CalendarPage() {
   const today = useMemo(() => new Date(), [])
   const [year, setYear] = useState(today.getFullYear())
   const [month, setMonth] = useState(today.getMonth() + 1)
-  const [region, setRegion] = useState('')
-  const [regions, setRegions] = useState([])
+  const [selectedRegions, setSelectedRegions] = useState([])
+  const [regionOptions, setRegionOptions] = useState([])
+  // 배열은 매번 새로 만들어지므로 effect 의존성에는 문자열 키를 쓴다
+  const regionsKey = selectedRegions.join('|')
+  const regionLabel = formatRegionList(selectedRegions)
   const [countsByDate, setCountsByDate] = useState({})
   const [monthFestivalTotal, setMonthFestivalTotal] = useState(0)
   const [monthItems, setMonthItems] = useState([])
@@ -92,8 +97,8 @@ export default function CalendarPage() {
 
   useEffect(() => {
     fetchRegions()
-      .then((data) => setRegions(Array.isArray(data.items) ? data.items : []))
-      .catch(() => setRegions([]))
+      .then((data) => setRegionOptions(Array.isArray(data.items) ? data.items : []))
+      .catch(() => setRegionOptions([]))
   }, [])
 
   // 월·지역 변경 → 달력 건수 + 월 축제 목록
@@ -114,7 +119,7 @@ export default function CalendarPage() {
       setMonthItems([])
 
       try {
-        const data = await fetchFestivalCalendar({ year, month, region })
+        const data = await fetchFestivalCalendar({ year, month, regions: selectedRegions })
         if (cancelled) return
 
         const map = {}
@@ -148,7 +153,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [year, month, region])
+  }, [year, month, regionsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 날짜 선택 → 해당일 축제 목록 (지역 필터 유지)
   useEffect(() => {
@@ -165,7 +170,7 @@ export default function CalendarPage() {
       setDayError('')
 
       try {
-        const data = await fetchFestivalsByDate({ date: selectedDate, region })
+        const data = await fetchFestivalsByDate({ date: selectedDate, regions: selectedRegions })
         if (cancelled) return
         const list = Array.isArray(data.items) ? data.items : []
         setDayItems(list)
@@ -186,7 +191,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [selectedDate, region])
+  }, [selectedDate, regionsKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function goPrevMonth() {
     const next = shiftMonth(year, month, -1)
@@ -228,25 +233,6 @@ export default function CalendarPage() {
       </p>
 
       <div className="calendar-controls">
-        <div className="calendar-controls__field">
-          <label className="search-bar__label" htmlFor="calendar-region">
-            지역
-          </label>
-          <select
-            id="calendar-region"
-            className="search-bar__select"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-          >
-            <option value="">전체 지역</option>
-            {regions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="calendar-controls__field calendar-controls__month">
           <label className="search-bar__label" htmlFor="calendar-month">
             월 선택
@@ -267,6 +253,12 @@ export default function CalendarPage() {
             </button>
           </div>
         </div>
+
+        <RegionChips
+          options={regionOptions}
+          selected={selectedRegions}
+          onChange={setSelectedRegions}
+        />
       </div>
 
       {status === 'loading' && (
@@ -286,7 +278,7 @@ export default function CalendarPage() {
         <>
           <p className="result-count">
             {year}년 {month}월
-            {region ? ` · ${region}` : ' · 전체 지역'}
+            {regionLabel ? ` · ${regionLabel}` : ' · 전체 지역'}
             {' — '}
             <button
               type="button"
@@ -376,7 +368,7 @@ export default function CalendarPage() {
           <div className="calendar-day-panel">
             <h2 className="calendar-day-panel__title">
               {panelTitle}
-              {region ? ` · ${region}` : ''}
+              {regionLabel ? ` · ${regionLabel}` : ''}
               {!selectedDate && (
                 <span className="result-count__hint"> · 날짜를 누르면 해당 일만 볼 수 있습니다</span>
               )}

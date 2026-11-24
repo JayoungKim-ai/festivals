@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { ApiError, fetchFestivals, fetchRegions } from '../api'
 import FestivalCard from '../components/FestivalCard'
 import FestivalListSkeleton from '../components/FestivalListSkeleton'
+import RegionChips from '../components/RegionChips'
 import { useFavorites } from '../hooks/useFavorites'
+import { formatRegionList } from '../regions'
 
 /** 한 페이지에 표시할 축제 수 (N-1) */
 const LIST_SIZE = 10
@@ -18,19 +20,19 @@ const STATUS_TABS = [
 /** 기본 선택 탭: 진행중 */
 const DEFAULT_STATUS = 'ongoing'
 
-function buildResultLabel(search, region, total) {
+function buildResultLabel(search, regions, total) {
   const parts = []
   if (search) parts.push(`"${search}"`)
-  if (region) parts.push(region)
+  if (regions.length > 0) parts.push(formatRegionList(regions))
   if (parts.length === 0) return `전체 ${total.toLocaleString()}건`
   return `${parts.join(' · ')} 검색 결과 ${total.toLocaleString()}건`
 }
 
-/** 결과 없음 안내에 쓸 현재 조건 문구 (예: "불꽃" · 서울특별시 · 진행중) */
-function buildEmptyConditionLabel(search, region, statusValue) {
+/** 결과 없음 안내에 쓸 현재 조건 문구 (예: "불꽃" · 서울·부산 · 진행중) */
+function buildEmptyConditionLabel(search, regions, statusValue) {
   const parts = []
   if (search) parts.push(`"${search}"`)
-  if (region) parts.push(region)
+  if (regions.length > 0) parts.push(formatRegionList(regions))
   const tab = STATUS_TABS.find((item) => item.value === statusValue)
   if (statusValue && tab) parts.push(tab.label)
   return parts.length > 0 ? parts.join(' · ') : '현재'
@@ -46,16 +48,16 @@ function buildPageRangeLabel(page, size, total) {
 
 /**
  * 축제 찾기 화면
- * - 축제명 검색 + 지역(시도) 필터 (동시 적용)
+ * - 축제명 검색 + 지역(시도) 여러 개 선택 (동시 적용)
  * - 페이지당 10개 페이지네이션
  */
 export default function FestivalListPage() {
   const { isFavorite, toggleFavorite } = useFavorites()
   const [input, setInput] = useState('')
-  const [region, setRegion] = useState('')
-  const [regions, setRegions] = useState([])
+  const [regionOptions, setRegionOptions] = useState([])
   const [appliedSearch, setAppliedSearch] = useState('')
-  const [appliedRegion, setAppliedRegion] = useState('')
+  // 지역 버튼은 누르는 즉시 적용되므로 선택값이 곧 적용값
+  const [selectedRegions, setSelectedRegions] = useState([])
   const [statusTab, setStatusTab] = useState(DEFAULT_STATUS) // 진행 상태 탭 ('' | ongoing | ended)
   const [page, setPage] = useState(1)
   const [items, setItems] = useState([])
@@ -66,7 +68,7 @@ export default function FestivalListPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / LIST_SIZE))
 
-  async function loadFestivals(keyword, regionName, pageNumber, statusValue = statusTab) {
+  async function loadFestivals(keyword, regionNames, pageNumber, statusValue = statusTab) {
     setStatus('loading')
     setErrorMessage('')
 
@@ -75,7 +77,7 @@ export default function FestivalListPage() {
         page: pageNumber,
         size: LIST_SIZE,
         search: keyword,
-        region: regionName,
+        regions: regionNames,
         status: statusValue,
       })
       const list = Array.isArray(data.items) ? data.items : []
@@ -105,10 +107,10 @@ export default function FestivalListPage() {
   useEffect(() => {
     fetchRegions()
       .then((data) => {
-        setRegions(Array.isArray(data.items) ? data.items : [])
+        setRegionOptions(Array.isArray(data.items) ? data.items : [])
       })
       .catch(() => {
-        setRegions([])
+        setRegionOptions([])
       })
     // 히어로에 보여줄 "지금 진행중인 축제" 수 (검색 조건과 무관한 전국 기준)
     fetchFestivals({ page: 1, size: 1, status: 'ongoing' })
@@ -117,7 +119,7 @@ export default function FestivalListPage() {
       })
       .catch(() => {})
     // 초기 로드는 기본 탭(진행중) 기준
-    loadFestivals('', '', 1, DEFAULT_STATUS)
+    loadFestivals('', [], 1, DEFAULT_STATUS)
   }, [])
 
   function handleStatusChange(nextStatus) {
@@ -125,43 +127,39 @@ export default function FestivalListPage() {
     setStatusTab(nextStatus)
     setPage(1)
     // 탭 변경 시 현재 검색어·지역을 유지한 채 1페이지부터 다시 조회
-    loadFestivals(appliedSearch, appliedRegion, 1, nextStatus)
+    loadFestivals(appliedSearch, selectedRegions, 1, nextStatus)
   }
 
   /** 검색어·지역을 입력창과 적용값에 함께 반영하고 1페이지부터 다시 조회 */
-  function applyFilters(keyword, regionName) {
+  function applyFilters(keyword, regionNames) {
     setInput(keyword)
-    setRegion(regionName)
     setAppliedSearch(keyword)
-    setAppliedRegion(regionName)
+    setSelectedRegions(regionNames)
     setPage(1)
-    loadFestivals(keyword, regionName, 1)
+    loadFestivals(keyword, regionNames, 1)
   }
 
   function handleSearch(event) {
     event.preventDefault()
     const keyword = input.trim()
     setAppliedSearch(keyword)
-    setAppliedRegion(region)
     setPage(1)
-    loadFestivals(keyword, region, 1)
+    loadFestivals(keyword, selectedRegions, 1)
   }
 
-  function handleRegionChange(event) {
-    const nextRegion = event.target.value
-    setRegion(nextRegion)
-    setAppliedRegion(nextRegion)
+  /** 지역 버튼을 누르면 즉시 반영 (현재 검색어와 함께, 1페이지로) */
+  function handleRegionsChange(nextRegions) {
+    setSelectedRegions(nextRegions)
     const keyword = input.trim()
     setAppliedSearch(keyword)
     setPage(1)
-    // 지역 변경 즉시 반영 (현재 검색어와 함께, 1페이지로)
-    loadFestivals(keyword, nextRegion, 1)
+    loadFestivals(keyword, nextRegions, 1)
   }
 
   function goToPage(nextPage) {
     if (nextPage < 1 || nextPage > totalPages || nextPage === page) return
     setPage(nextPage)
-    loadFestivals(appliedSearch, appliedRegion, nextPage)
+    loadFestivals(appliedSearch, selectedRegions, nextPage)
     // 목록 상단으로 스크롤해 페이지 전환 후에도 읽기 쉽게
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -203,25 +201,6 @@ export default function FestivalListPage() {
 
         <form className="search-bar" onSubmit={handleSearch} role="search">
           <div className="search-bar__filters">
-            <div className="search-bar__field">
-              <label className="search-bar__label" htmlFor="festival-region">
-                지역
-              </label>
-              <select
-                id="festival-region"
-                className="search-bar__select"
-                value={region}
-                onChange={handleRegionChange}
-              >
-                <option value="">전체 지역</option>
-                {regions.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="search-bar__field search-bar__field--grow">
               <label className="search-bar__label" htmlFor="festival-search">
                 축제명 검색
@@ -242,6 +221,12 @@ export default function FestivalListPage() {
               </div>
             </div>
           </div>
+          <RegionChips
+            tone="dark"
+            options={regionOptions}
+            selected={selectedRegions}
+            onChange={handleRegionsChange}
+          />
         </form>
       </div>
 
@@ -275,7 +260,7 @@ export default function FestivalListPage() {
           <button
             type="button"
             className="state-box__action"
-            onClick={() => loadFestivals(appliedSearch, appliedRegion, page)}
+            onClick={() => loadFestivals(appliedSearch, selectedRegions, page)}
           >
             다시 시도
           </button>
@@ -286,7 +271,7 @@ export default function FestivalListPage() {
         <div className="empty-state" role="status">
           <p className="empty-state__title">조건에 맞는 축제가 없어요</p>
           <p className="empty-state__body">
-            {buildEmptyConditionLabel(appliedSearch, appliedRegion, statusTab)}
+            {buildEmptyConditionLabel(appliedSearch, selectedRegions, statusTab)}
             {' '}조건으로 찾은 결과가 없습니다. 조건을 넓혀 보세요.
           </p>
           <div className="empty-state__actions">
@@ -299,20 +284,20 @@ export default function FestivalListPage() {
                 전체 기간에서 찾기
               </button>
             )}
-            {appliedRegion && (
+            {selectedRegions.length > 0 && (
               <button
                 type="button"
                 className="empty-state__button"
-                onClick={() => applyFilters(appliedSearch, '')}
+                onClick={() => applyFilters(appliedSearch, [])}
               >
                 전체 지역에서 찾기
               </button>
             )}
-            {(appliedSearch || appliedRegion) && (
+            {(appliedSearch || selectedRegions.length > 0) && (
               <button
                 type="button"
                 className="empty-state__button"
-                onClick={() => applyFilters('', '')}
+                onClick={() => applyFilters('', [])}
               >
                 검색 조건 초기화
               </button>
@@ -324,7 +309,7 @@ export default function FestivalListPage() {
       {status === 'ok' && (
         <>
           <p className="result-count">
-            {buildResultLabel(appliedSearch, appliedRegion, total)}
+            {buildResultLabel(appliedSearch, selectedRegions, total)}
             <span className="result-count__hint">
               {' '}
               ({buildPageRangeLabel(page, LIST_SIZE, total)} · {page}/{totalPages}페이지)
