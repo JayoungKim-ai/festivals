@@ -381,9 +381,15 @@ def sync_festivals_endpoint():
         with Session(engine) as session:
             summary = sync_festivals(session)
     except PublicApiError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        raise HTTPException(status_code=502, detail=_redact_api_key(str(exc))) from exc
 
     return {"message": "동기화 완료", **summary}
+
+
+def _redact_api_key(message: str) -> str:
+    """응답으로 내보내는 오류 문구에서 공공데이터 인증키를 가린다 (이중 안전장치)."""
+    key = config.FESTIVAL_API_KEY
+    return message.replace(key, "***") if key else message
 
 
 # ==========================================================================
