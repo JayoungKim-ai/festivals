@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   ApiError,
   fetchFestivalCalendar,
   fetchFestivalsByDate,
   fetchRegions,
 } from '../api'
+import FestivalCard from '../components/FestivalCard'
+import FestivalListSkeleton from '../components/FestivalListSkeleton'
 import { FestivalsMap, hasValidCoordinates } from '../components/FestivalMap'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
@@ -25,15 +26,6 @@ function shiftMonth(year, month, delta) {
 
 function formatDateLabel(iso) {
   return String(iso).replaceAll('-', '.')
-}
-
-function formatPeriod(startDate, endDate) {
-  const start = startDate ? String(startDate).slice(0, 10).replaceAll('-', '.') : null
-  const end = endDate ? String(endDate).slice(0, 10).replaceAll('-', '.') : null
-  if (start && end) return `${start} ~ ${end}`
-  if (start) return start
-  if (end) return end
-  return '정보 없음'
 }
 
 function buildCalendarCells(year, month) {
@@ -111,7 +103,12 @@ export default function CalendarPage() {
     async function load() {
       setStatus('loading')
       setErrorMessage('')
-      setSelectedDate(null)
+      // 이번 달을 보고 있으면 오늘 날짜를 기본 선택, 다른 달이면 월 전체 보기
+      const isCurrentMonth =
+        year === today.getFullYear() && month === today.getMonth() + 1
+      setSelectedDate(
+        isCurrentMonth ? toDateKey(year, month, today.getDate()) : null,
+      )
       setDayItems([])
       setDayStatus('idle')
       setMonthItems([])
@@ -307,48 +304,73 @@ export default function CalendarPage() {
             {status === 'empty' && ' (이 달에는 표시할 축제가 없습니다)'}
           </p>
 
-          <div className="calendar-grid" role="grid" aria-label={`${year}년 ${month}월 달력`}>
-            {WEEKDAYS.map((label) => (
-              <div key={label} className="calendar-grid__weekday" role="columnheader">
-                {label}
-              </div>
-            ))}
-            {cells.map((cell) => {
-              if (cell.type === 'empty') {
-                return (
-                  <div
-                    key={cell.key}
-                    className="calendar-grid__cell calendar-grid__cell--empty"
-                  />
-                )
-              }
-              const count = countsByDate[cell.date] || 0
-              const isSelected = selectedDate === cell.date
-              const classNames = [
-                'calendar-grid__cell',
-                'calendar-grid__cell--day',
-                count > 0 ? 'calendar-grid__cell--has-events' : 'calendar-grid__cell--zero',
-                isSelected ? 'calendar-grid__cell--selected' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')
+          <div className="calendar-layout">
+            <div className="calendar-grid" role="grid" aria-label={`${year}년 ${month}월 달력`}>
+              {WEEKDAYS.map((label) => (
+                <div key={label} className="calendar-grid__weekday" role="columnheader">
+                  {label}
+                </div>
+              ))}
+              {cells.map((cell) => {
+                if (cell.type === 'empty') {
+                  return (
+                    <div
+                      key={cell.key}
+                      className="calendar-grid__cell calendar-grid__cell--empty"
+                    />
+                  )
+                }
+                const count = countsByDate[cell.date] || 0
+                const isSelected = selectedDate === cell.date
+                const classNames = [
+                  'calendar-grid__cell',
+                  'calendar-grid__cell--day',
+                  count > 0 ? 'calendar-grid__cell--has-events' : 'calendar-grid__cell--zero',
+                  isSelected ? 'calendar-grid__cell--selected' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')
 
-              return (
-                <button
-                  key={cell.key}
-                  type="button"
-                  className={classNames}
-                  onClick={() => handleDayClick(cell.date)}
-                  aria-pressed={isSelected}
-                  aria-label={`${cell.date}, 축제 ${count}건`}
-                >
-                  <span className="calendar-grid__day">{cell.day}</span>
-                  <span className="calendar-grid__count">
-                    {count > 0 ? `${count}건` : '—'}
-                  </span>
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={cell.key}
+                    type="button"
+                    className={classNames}
+                    onClick={() => handleDayClick(cell.date)}
+                    aria-pressed={isSelected}
+                    aria-label={`${cell.date}, 축제 ${count}건`}
+                  >
+                    <span className="calendar-grid__day">{cell.day}</span>
+                    <span className="calendar-grid__count">
+                      {count > 0 ? `${count}건` : '—'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* 오른쪽: 달력과 같은 높이의 지도 */}
+            <section
+              className="calendar-layout__map"
+              aria-label={selectedDate ? '선택일 축제 지도' : '이 달 축제 지도'}
+            >
+              {panelStatus === 'loading' && (
+                <div className="calendar-map-placeholder skeleton" aria-hidden="true" />
+              )}
+              {(panelStatus === 'empty' || panelStatus === 'error') && (
+                <div className="calendar-map-placeholder">
+                  <p>표시할 축제가 없습니다</p>
+                </div>
+              )}
+              {panelStatus === 'ok' &&
+                (mappedFestivals.length > 0 ? (
+                  <FestivalsMap festivals={mappedFestivals} />
+                ) : (
+                  <div className="calendar-map-placeholder">
+                    <p>위치 좌표가 있는 축제가 없어 지도를 표시할 수 없습니다</p>
+                  </div>
+                ))}
+            </section>
           </div>
 
           <div className="calendar-day-panel">
@@ -364,11 +386,14 @@ export default function CalendarPage() {
             </h2>
 
             {panelStatus === 'loading' && (
-              <p className="state-message" role="status">
-                {selectedDate
-                  ? '선택한 날짜의 축제를 불러오는 중…'
-                  : '이 달의 축제를 불러오는 중…'}
-              </p>
+              <FestivalListSkeleton
+                count={3}
+                label={
+                  selectedDate
+                    ? '선택한 날짜의 축제를 불러오는 중…'
+                    : '이 달의 축제를 불러오는 중…'
+                }
+              />
             )}
 
             {panelStatus === 'error' && (
@@ -388,21 +413,6 @@ export default function CalendarPage() {
 
             {panelStatus === 'ok' && (
               <>
-                <section
-                  className="calendar-day-map"
-                  aria-label={selectedDate ? '선택일 축제 지도' : '이 달 축제 지도'}
-                >
-                  {mappedFestivals.length > 0 ? (
-                    <FestivalsMap festivals={mappedFestivals} />
-                  ) : (
-                    <p className="state-message">
-                      위치 좌표가 있는 축제가 없어 지도를 표시할 수 없습니다.
-                      {panelItems.length > 0 &&
-                        ` (목록 ${panelItems.length}건은 아래에 표시됩니다)`}
-                    </p>
-                  )}
-                </section>
-
                 <p className="result-count">
                   총 {panelItems.length.toLocaleString()}건
                   {mappedFestivals.length < panelItems.length && (
@@ -415,33 +425,7 @@ export default function CalendarPage() {
 
                 <ul className="festival-list">
                   {panelItems.map((festival) => (
-                    <li key={festival.id} className="festival-card">
-                      <div className="festival-card__body">
-                        <h2 className="festival-card__title">{festival.festival_name}</h2>
-                        <dl className="festival-card__meta">
-                          <div>
-                            <dt>개최기간</dt>
-                            <dd>
-                              {formatPeriod(festival.start_date, festival.end_date)}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt>개최장소</dt>
-                            <dd>{festival.location || '정보 없음'}</dd>
-                          </div>
-                          <div>
-                            <dt>지역</dt>
-                            <dd>{festival.region || '정보 없음'}</dd>
-                          </div>
-                        </dl>
-                      </div>
-                      <Link
-                        className="festival-card__link"
-                        to={`/festivals/${festival.id}`}
-                      >
-                        상세 보기
-                      </Link>
-                    </li>
+                    <FestivalCard key={festival.id} festival={festival} />
                   ))}
                 </ul>
               </>

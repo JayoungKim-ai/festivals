@@ -1,22 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError, fetchFestival } from '../api'
-import FavoriteButton from '../components/FavoriteButton'
+import FestivalCard from '../components/FestivalCard'
+import FestivalListSkeleton from '../components/FestivalListSkeleton'
 import { useFavorites } from '../hooks/useFavorites'
-
-function formatDate(value) {
-  if (!value) return null
-  return String(value).slice(0, 10).replaceAll('-', '.')
-}
-
-function formatPeriod(startDate, endDate) {
-  const start = formatDate(startDate)
-  const end = formatDate(endDate)
-  if (start && end) return `${start} ~ ${end}`
-  if (start) return start
-  if (end) return end
-  return '정보 없음'
-}
 
 /**
  * 즐겨찾기 목록 화면
@@ -115,9 +102,11 @@ export default function FavoritesPage() {
       )}
 
       {status === 'loading' && (
-        <p className="state-message" role="status">
-          즐겨찾기를 불러오는 중…
-        </p>
+        <FestivalListSkeleton
+          count={Math.min(Math.max(favoriteIds.length, 1), 4)}
+          label="즐겨찾기를 불러오는 중…"
+          slowHint="서버를 깨우는 중이에요. 처음 접속하면 최대 1분 정도 걸릴 수 있어요."
+        />
       )}
 
       {status === 'error' && (
@@ -128,43 +117,30 @@ export default function FavoritesPage() {
       )}
 
       {status === 'empty' && (
-        <div className="state-message" role="status">
-          <p>저장한 축제가 없습니다.</p>
-          <p>
-            <Link to="/festivals">축제 찾기</Link>에서 관심 있는 축제를 즐겨찾기에 추가해
-            보세요.
+        <div className="empty-state" role="status">
+          <p className="empty-state__title">아직 저장한 축제가 없어요</p>
+          <p className="empty-state__body">
+            축제 카드의 ☆ 버튼을 누르면 이곳에 모아 볼 수 있습니다.
           </p>
+          <div className="empty-state__actions">
+            <Link className="empty-state__button empty-state__button--primary" to="/festivals">
+              축제 찾으러 가기
+            </Link>
+          </div>
         </div>
       )}
 
       {status === 'ok' && (
         <ul className="festival-list">
           {items.map((festival) => (
-            <li key={festival.id} className="festival-card">
-              <div className="festival-card__body">
-                <div className="festival-card__heading">
-                  <h2 className="festival-card__title">{festival.festival_name}</h2>
-                  <FavoriteButton
-                    compact
-                    active={isFavorite(festival.id)}
-                    onToggle={() => toggleFavorite(festival.id)}
-                  />
-                </div>
-                <dl className="festival-card__meta">
-                  <div>
-                    <dt>개최기간</dt>
-                    <dd>{formatPeriod(festival.start_date, festival.end_date)}</dd>
-                  </div>
-                  <div>
-                    <dt>개최장소</dt>
-                    <dd>{festival.location || '정보 없음'}</dd>
-                  </div>
-                </dl>
-              </div>
-              <Link className="festival-card__link" to={`/festivals/${festival.id}`}>
-                상세 보기
-              </Link>
-            </li>
+            <FestivalCard
+              key={festival.id}
+              festival={festival}
+              favorite={{
+                active: isFavorite(festival.id),
+                onToggle: () => toggleFavorite(festival.id),
+              }}
+            />
           ))}
         </ul>
       )}

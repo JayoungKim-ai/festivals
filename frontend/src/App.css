@@ -1,22 +1,32 @@
 :root {
-  /* 선명한 초록 + 노랑 팔레트 (그라데이션 미사용) */
-  --primary: #16a34a;         /* 선명한 초록 */
-  --primary-strong: #15803d;
-  --primary-soft: #dcfce7;
-  --accent: #eab308;          /* 선명한 노랑 */
-  --accent-strong: #ca8a04;
-  --accent-soft: #fef9c3;
+  /* 더스크 퍼플 팔레트: 딥 인디고 + 마젠타 핑크 + 골드 */
+  --night: #1e1b4b;           /* 히어로·헤더·푸터 배경 */
+  --night-2: #312e81;
+  --night-text: #ffffff;
+  --night-muted: #c7cbe8;     /* 남색 위 보조 글자 (대비 10:1) */
+  --sparkle: #ffd166;         /* 남색 위 강조 글자 */
 
-  --ink: #0f172a;             /* 진한 슬레이트 */
-  --ink-soft: #475569;
-  --ink-muted: #94a3b8;
+  --primary: #be185d;         /* 마젠타 핑크 (흰 글자 대비 6.0:1) */
+  --primary-strong: #9d174d;
+  --primary-soft: #fce7f3;
+  --accent: #fbbf24;          /* 골드 */
+  --accent-strong: #d97706;
+  --accent-soft: #fef3c7;
+  --accent-text: #92400e;     /* 연노랑 배경 위 글자용 (대비 6.4:1) */
+  --focus-ring: #9d174d;
+  --focus-ring-dark: #fbbf24; /* 남색 배경 위 포커스 */
 
+  --ink: #161a33;
+  --ink-soft: #474d6b;
+  --ink-muted: #64748b;       /* 흰 배경 대비 4.7:1 */
+
+  --page: #f7f5fb;
   --card: #ffffff;
-  --border: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.16);
+  --border: rgba(22, 26, 51, 0.08);
+  --border-strong: rgba(22, 26, 51, 0.16);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 4px 12px rgba(22, 163, 74, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 1px 2px rgba(22, 26, 51, 0.06), 0 1px 3px rgba(22, 26, 51, 0.08);
+  --shadow-md: 0 10px 24px rgba(190, 24, 93, 0.12), 0 2px 6px rgba(22, 26, 51, 0.06);
 }
 
 * {
@@ -24,18 +34,16 @@
 }
 
 html {
+  /* 기본 글자 크기 20% 확대 (rem 단위 글자·여백이 함께 커짐) */
+  font-size: 120%;
   /* iOS 가로 방향 전환 시 글자 크기 자동 확대 방지 */
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  background:
-    radial-gradient(ellipse 70% 45% at 8% -8%, rgba(22, 163, 74, 0.16) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(234, 179, 8, 0.16) 0%, transparent 52%),
-    #f4f7f2;
-  background-attachment: fixed;
+  font-family: "Pretendard Variable", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: var(--page);
   color: var(--ink);
   min-height: 100vh;
   /* 어떤 요소가 넘쳐도 화면이 좌우로 흔들리지 않게 */
@@ -58,6 +66,25 @@ a {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* 키보드 이동 시에만 보이는 공통 포커스 표시 */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* 초록 배경 위 요소는 흰 링으로 구분 */
+.site-nav__link.is-active:focus-visible,
+.status-tab--active:focus-visible,
+.search-bar__button:focus-visible,
+.mobile-nav__item.is-active:focus-visible {
+  outline-color: var(--focus-ring);
+  box-shadow: 0 0 0 2px #fff inset;
 }
 
 .app-shell {
@@ -84,15 +111,15 @@ a {
   position: sticky;
   top: 0;
   z-index: 20;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(30, 27, 75, 0.94);
   backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .site-header__inner {
   width: min(960px, 100%);
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -100,10 +127,24 @@ a {
 }
 
 .site-brand {
-  font-size: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--primary);
+  color: var(--night-text);
+}
+
+.site-brand__logo {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  transition: transform 0.4s ease;
+}
+
+.site-brand:hover .site-brand__logo {
+  transform: rotate(45deg) scale(1.08);
 }
 
 .site-nav {
@@ -114,20 +155,29 @@ a {
 .site-nav__link {
   padding: 8px 14px;
   border-radius: 999px;
-  color: var(--ink-soft);
+  color: var(--night-muted);
   font-size: 0.95rem;
   font-weight: 600;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .site-nav__link:hover {
-  color: var(--primary);
-  background: var(--primary-soft);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .site-nav__link.is-active {
   color: #fff;
   background: var(--primary);
+}
+
+/* 남색 배경 위에서는 골드 포커스 링 */
+.site-header a:focus-visible,
+.festival-hero a:focus-visible,
+.festival-hero button:focus-visible,
+.festival-hero select:focus-visible,
+.festival-hero input:focus-visible {
+  outline-color: var(--focus-ring-dark);
 }
 
 /* ----- Fireworks (클릭 폭죽 효과) ----- */
@@ -147,9 +197,17 @@ a {
 
 /* ----- Footer ----- */
 .site-footer {
-  border-top: 3px solid var(--accent);
-  background: #14532d;
-  color: #e7f3ea;
+  position: relative;
+  background: var(--night);
+  color: var(--night-muted);
+}
+
+/* 상단 불꽃색 띠 */
+.site-footer::before {
+  content: "";
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), #f472b6 35%, var(--accent) 70%, #a78bfa);
 }
 
 .site-footer__inner {
@@ -166,7 +224,7 @@ a {
 
 .site-footer__muted {
   margin-top: 12px;
-  color: #a8a29e;
+  color: #9ea4cf;
   font-size: 0.8rem;
 }
 
@@ -244,6 +302,155 @@ a {
   margin-bottom: 0;
 }
 
+/* ----- Festival hero (축제 찾기 상단) ----- */
+.festival-hero {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 20px;
+  padding: 36px 32px 28px;
+  border-radius: 24px;
+  color: var(--night-text);
+  background:
+    radial-gradient(1.5px 1.5px at 12% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 68%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 46% 14%, #ffd166 50%, transparent 51%),
+    radial-gradient(1px 1px at 58% 46%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 72% 82%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 86% 30%, #ffd166 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 64%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 86%, #fff 50%, transparent 51%),
+    radial-gradient(ellipse 60% 70% at 100% 0%, rgba(236, 72, 153, 0.45) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 0% 100%, rgba(167, 139, 250, 0.35) 0%, transparent 60%),
+    linear-gradient(160deg, var(--night-2) 0%, var(--night) 70%);
+  box-shadow: 0 18px 40px rgba(30, 27, 75, 0.25);
+}
+
+.festival-hero__burst {
+  position: absolute;
+  top: -40px;
+  right: -30px;
+  width: 220px;
+  height: 220px;
+  opacity: 0.55;
+  pointer-events: none;
+  animation: hero-burst 4s ease-in-out infinite;
+}
+
+@keyframes hero-burst {
+  0%,
+  100% {
+    transform: scale(0.94) rotate(0deg);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.04) rotate(8deg);
+    opacity: 0.7;
+  }
+}
+
+.festival-hero__eyebrow {
+  position: relative;
+  margin: 0 0 10px;
+  color: var(--sparkle);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.festival-hero__title {
+  position: relative;
+  margin: 0 0 10px;
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  word-break: keep-all;
+}
+
+.festival-hero__stat {
+  position: relative;
+  margin: 0 0 24px;
+  color: var(--night-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.festival-hero__stat strong {
+  color: var(--sparkle);
+  font-weight: 800;
+}
+
+/* 히어로 안의 검색 폼: 유리 느낌 패널 */
+.festival-hero .search-bar {
+  position: relative;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(6px);
+}
+
+.festival-hero .search-bar__label {
+  color: var(--night-muted);
+}
+
+.festival-hero .search-bar__select,
+.festival-hero .search-bar__input {
+  border-color: transparent;
+}
+
+.festival-hero .search-bar__input:focus,
+.festival-hero .search-bar__select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.35);
+}
+
+.festival-hero .search-bar__button {
+  background: var(--accent);
+  color: var(--night);
+}
+
+.festival-hero .search-bar__button:hover {
+  background: var(--sparkle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .festival-hero__burst {
+    animation: none;
+  }
+}
+
+/* 진행중 배지: 깜빡이는 점 */
+.festival-card__badge--ongoing::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: live-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes live-dot {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(190, 24, 93, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(190, 24, 93, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .festival-card__badge--ongoing::before {
+    animation: none;
+  }
+}
+
+.festival-card:hover .festival-card__title {
+  color: var(--primary-strong);
+}
+
 /* ----- Festival list / search ----- */
 /* 진행 상태 탭 (전체 | 진행중 | 종료) */
 .status-tabs {
@@ -277,19 +484,13 @@ a {
 
 .status-tab--active,
 .status-tab--active:hover {
-  background: var(--primary);
+  background: var(--night);
   color: #fff;
 }
 
 /* 검색 영역을 콘텐츠와 확실히 구분되는 카드로 만든다 */
 .search-bar {
-  margin: 0 0 28px;
-  padding: 18px 20px;
-  background: var(--primary-soft);
-  border: 1px solid rgba(22, 163, 74, 0.25);
-  border-left: 5px solid var(--primary);
-  border-radius: 16px;
-  box-shadow: var(--shadow-sm);
+  margin: 0;
 }
 
 .search-bar__filters {
@@ -404,7 +605,7 @@ a {
 }
 
 .result-count__action--active {
-  border-color: rgba(79, 70, 229, 0.35);
+  border-color: rgba(190, 24, 93, 0.35);
   background: var(--primary-soft);
   text-decoration: none;
 }
@@ -456,39 +657,45 @@ a {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+/* 좁은 화면에서는 1열 */
+@media (max-width: 820px) {
+  .festival-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .festival-card {
   position: relative;
   display: flex;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px 20px;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.festival-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--primary);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .festival-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  border-color: rgba(190, 24, 93, 0.35);
+}
+
+/* 종료된 축제: 배경을 낮추고 제목 톤 다운 (투명도 대신 색으로 대비 유지) */
+.festival-card--ended {
+  background: #f8fafc;
+}
+
+.festival-card--ended .festival-card__title {
+  color: var(--ink-soft);
 }
 
 .festival-card__body {
@@ -496,38 +703,74 @@ a {
   min-width: 0;
 }
 
+/* 윗줄: 상태 배지 + 지역 태그 (왼쪽) / 즐겨찾기 (오른쪽) */
+.festival-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  margin-bottom: 6px;
+}
+
+.festival-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.festival-card__area {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eeedf5;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .festival-card__title {
-  margin: 0 0 10px;
-  font-size: 1.12rem;
+  margin: 0 0 8px;
+  font-size: 1.1rem;
   font-weight: 700;
+  line-height: 1.35;
   letter-spacing: -0.02em;
   color: var(--ink);
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
 
-.festival-card__heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+/* 제목 링크를 카드 전체 크기로 늘려 카드 어디를 눌러도 상세로 이동 */
+.festival-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
 }
 
-.festival-card__title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
+.festival-card__link:focus-visible {
+  outline: none;
 }
 
-.festival-card__heading .festival-card__title {
-  margin: 0;
+.festival-card__link:focus-visible::after {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: -3px;
+  border-radius: 16px;
 }
 
-.festival-card__remaining {
+/* 즐겨찾기 버튼은 카드 링크 위에 올려 따로 눌리게 */
+.festival-card .favorite-button {
+  position: relative;
+  z-index: 2;
+  padding: 7px 10px;
+}
+
+.festival-card__badge {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
@@ -539,56 +782,68 @@ a {
   white-space: nowrap;
 }
 
-.festival-card__remaining--ongoing {
+.festival-card__badge--ongoing {
   color: var(--primary-strong);
   background: var(--primary-soft);
 }
 
-.festival-card__remaining--upcoming {
-  color: var(--accent-strong);
+.festival-card__badge--upcoming {
+  color: var(--accent-text);
   background: var(--accent-soft);
 }
 
-.festival-card__meta {
-  margin: 0;
-  display: grid;
+.festival-card__badge--ended {
+  color: var(--ink-soft);
+  background: #e2e8f0;
+}
+
+.festival-card__period,
+.festival-card__place {
+  display: flex;
+  align-items: flex-start;
   gap: 6px;
-}
-
-.festival-card__meta div {
-  display: grid;
-  grid-template-columns: 4.5rem 1fr;
-  gap: 8px;
+  margin: 0;
   font-size: 0.9rem;
+  line-height: 1.45;
 }
 
-.festival-card__meta dt {
-  margin: 0;
-  color: var(--ink-muted);
+.festival-card__period {
+  margin-bottom: 4px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
-.festival-card__meta dd {
-  margin: 0;
+.festival-card__place {
   color: var(--ink-soft);
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
-.festival-card__link {
-  align-self: center;
+.festival-card__icon {
   flex-shrink: 0;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: 0.875rem;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background 0.15s ease, color 0.15s ease;
+  width: 1.05em;
+  height: 1.05em;
+  margin-top: 0.2em;
+  fill: none;
+  stroke: var(--ink-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.festival-card__link:hover {
-  background: var(--primary);
-  color: #fff;
+.festival-card__chevron {
+  flex-shrink: 0;
+  align-self: center;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--ink-muted);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.festival-card:hover .festival-card__chevron {
+  color: var(--primary);
+  transform: translateX(2px);
 }
 
 .state-message {
@@ -599,6 +854,146 @@ a {
   background: rgba(255, 255, 255, 0.7);
   border-radius: 14px;
   border: 1px dashed var(--border-strong);
+}
+
+/* 화면에는 숨기고 스크린리더에만 읽히는 텍스트 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ----- 로딩 스켈레톤 ----- */
+.skeleton-list__hint {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.festival-card--skeleton {
+  pointer-events: none;
+}
+
+.festival-card--skeleton .festival-card__body {
+  display: grid;
+  gap: 10px;
+}
+
+.skeleton {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eeedf5 0%, #e1e0ec 40%, #eeedf5 80%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton--title {
+  width: 55%;
+  height: 18px;
+  margin-bottom: 4px;
+}
+
+.skeleton--line {
+  width: 40%;
+}
+
+.skeleton--short {
+  width: 65%;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* ----- 결과 없음 ----- */
+.empty-state {
+  margin: 24px 0;
+  padding: 28px 20px;
+  text-align: center;
+  background: var(--card);
+  border: 1px dashed var(--border-strong);
+  border-radius: 16px;
+}
+
+.empty-state__title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.empty-state__body {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.empty-state__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.empty-state__actions:empty {
+  display: none;
+}
+
+.empty-state__button {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.empty-state__button:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.empty-state__button--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.empty-state__button--primary:hover {
+  background: var(--primary-strong);
+  border-color: var(--primary-strong);
+  color: #fff;
 }
 
 .state-box {
@@ -726,14 +1121,14 @@ a {
 
 .favorite-button:hover {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-soft);
 }
 
 .favorite-button--active {
   background: var(--accent-soft);
   border-color: var(--accent);
-  color: var(--accent-strong);
+  color: var(--accent-text);
 }
 
 .favorite-button__icon {
@@ -748,7 +1143,7 @@ a {
   background: var(--primary-soft);
   color: var(--primary-strong);
   font-size: 0.9rem;
-  border: 1px solid rgba(79, 70, 229, 0.15);
+  border: 1px solid rgba(190, 24, 93, 0.2);
 }
 
 .favorites-page .state-message a {
@@ -767,9 +1162,9 @@ a {
   align-items: flex-end;
   margin-bottom: 24px;
   padding: 18px 20px;
-  background: var(--primary-soft);
-  border: 1px solid rgba(22, 163, 74, 0.25);
-  border-left: 5px solid var(--primary);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--primary);
   border-radius: 16px;
   box-shadow: var(--shadow-sm);
 }
@@ -827,8 +1222,9 @@ a {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-  margin-bottom: 16px;
+  grid-auto-rows: min-content;
+  gap: 4px;
+  align-content: start;
 }
 
 .calendar-grid__weekday {
@@ -840,8 +1236,8 @@ a {
 }
 
 .calendar-grid__cell {
-  min-height: 64px;
-  border-radius: 12px;
+  min-height: 50px;
+  border-radius: 10px;
   border: 1px solid transparent;
 }
 
@@ -854,8 +1250,8 @@ a {
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 4px;
-  padding: 8px;
+  gap: 2px;
+  padding: 6px 7px;
   background: #fff;
   border-color: var(--border);
   font: inherit;
@@ -876,18 +1272,26 @@ a {
 
 .calendar-grid__cell--has-events {
   background: var(--primary-soft);
-  border-color: rgba(79, 70, 229, 0.25);
+  border-color: rgba(190, 24, 93, 0.25);
 }
 
-.calendar-grid__cell--selected {
-  outline: 2px solid var(--primary);
+.calendar-grid__cell--selected,
+.calendar-grid__cell--selected:hover {
+  outline: 2px solid var(--primary-strong);
   outline-offset: 1px;
-  background: #e0e7ff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.calendar-grid__cell--selected .calendar-grid__count {
+  color: #fff;
 }
 
 .calendar-grid__day {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
+  line-height: 1.1;
 }
 
 .calendar-grid__count {
@@ -935,10 +1339,6 @@ a {
   letter-spacing: -0.02em;
 }
 
-.calendar-day-map {
-  margin-bottom: 16px;
-}
-
 @media (max-width: 640px) {
   .calendar-grid__cell {
     min-height: 56px;
@@ -950,6 +1350,13 @@ a {
 
   .calendar-month-nav {
     flex-wrap: wrap;
+  }
+
+  /* 글자가 커져 월 선택칸이 잘리지 않도록 지역·월 선택을 한 줄씩 */
+  .calendar-controls__field,
+  .calendar-controls__month {
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   .site-nav {
@@ -1068,7 +1475,33 @@ a {
   }
 
   .site-brand {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+  }
+
+  .festival-hero {
+    margin-bottom: 14px;
+    padding: 24px 18px 18px;
+    border-radius: 20px;
+  }
+
+  .festival-hero__title {
+    font-size: 1.5rem;
+  }
+
+  .festival-hero__stat {
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+  }
+
+  .festival-hero__burst {
+    width: 150px;
+    height: 150px;
+    top: -30px;
+    right: -30px;
+  }
+
+  .festival-hero .search-bar {
+    padding: 12px;
   }
 
   /* 본문: 하단 탭바에 가리지 않도록 아래 여백 확보 (safe-area 포함) */
@@ -1090,10 +1523,6 @@ a {
   }
 
   /* 상단 컨트롤(검색·달력)도 여백 축소 */
-  .search-bar {
-    margin-bottom: 16px;
-  }
-
   .calendar-controls {
     margin-bottom: 14px;
   }
@@ -1120,7 +1549,7 @@ a {
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(12px);
     border-top: 1px solid var(--border);
-    box-shadow: 0 -4px 20px rgba(79, 70, 229, 0.08);
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
   }
 
   .mobile-nav__item {
@@ -1153,29 +1582,21 @@ a {
 
   /* ----- 카드 ----- */
   .festival-card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 16px;
+    padding: 14px 14px;
     border-radius: 14px;
-    box-shadow: 0 1px 3px rgba(28, 25, 23, 0.05);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
   }
 
-  .festival-card__link {
-    align-self: stretch;
-    text-align: center;
-    padding: 13px 14px;
-    border-radius: 12px;
-    font-size: 0.95rem;
+  .festival-card:hover {
+    transform: none;
   }
 
-  .festival-card__link:active {
-    background: #c7d8e2;
+  .festival-card:active {
+    background: var(--primary-soft);
   }
 
-  .festival-card__meta div {
-    grid-template-columns: 4.5rem 1fr;
-    gap: 8px;
+  .festival-card__title {
+    font-size: 1.02rem;
   }
 
   /* ----- 상세 ----- */
@@ -1201,11 +1622,6 @@ a {
   }
 
   /* ----- 검색 ----- */
-  .search-bar {
-    padding: 14px;
-    border-radius: 14px;
-  }
-
   .search-bar__field,
   .search-bar__field--grow {
     min-width: 100%;
@@ -1227,5 +1643,235 @@ a {
   .festival-map__canvas,
   .festival-map__canvas--wide {
     height: 240px;
+  }
+}
+
+/* ----- 지도 꾸미기 (핀·팝업·컨트롤) ----- */
+.festival-map {
+  border-radius: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.festival-map .leaflet-container {
+  font-family: inherit;
+  background: #f2efe9;
+}
+
+/* OSM 기본 지도의 강한 색을 눌러 테마 핀이 돋보이게 */
+.festival-map .leaflet-tile-pane {
+  filter: saturate(0.45) brightness(1.04) contrast(0.92);
+}
+
+/* 물방울 핀: divIcon 기본 흰 박스 제거 + 그림자 */
+.festival-pin {
+  background: none;
+  border: 0;
+  filter: drop-shadow(0 4px 6px rgba(30, 27, 75, 0.35));
+  transition: transform 0.15s ease;
+  transform-origin: 50% 100%;
+}
+
+.festival-pin svg {
+  display: block;
+}
+
+.festival-pin:hover {
+  z-index: 1000 !important;
+}
+
+.festival-pin:hover svg {
+  transform: translateY(-3px) scale(1.08);
+  transition: transform 0.15s ease;
+}
+
+/* 팝업: 둥근 카드 */
+.festival-map .leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(30, 27, 75, 0.2);
+}
+
+.festival-map .leaflet-popup-content {
+  display: grid;
+  gap: 4px;
+  min-width: 160px;
+  margin: 12px 16px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.festival-popup__title {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+}
+
+.festival-popup__place {
+  color: var(--ink-soft);
+}
+
+.festival-map .leaflet-popup-content a.festival-popup__link {
+  margin-top: 4px;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.festival-map .leaflet-popup-content a.festival-popup__link:hover {
+  color: var(--primary-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* 확대·축소 버튼: 테마 색 둥근 버튼 */
+.festival-map .leaflet-bar {
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(30, 27, 75, 0.18);
+}
+
+.festival-map .leaflet-bar a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  border-bottom-color: var(--border);
+  color: var(--night);
+  font-weight: 700;
+}
+
+.festival-map .leaflet-bar a:hover {
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.festival-map .leaflet-control-attribution {
+  font-size: 0.65rem;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .festival-pin:hover svg {
+    transform: none;
+  }
+}
+
+/* ----- 핀 묶음 (marker cluster) ----- */
+.festival-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(190, 24, 93, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.festival-cluster span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 4px 10px rgba(30, 27, 75, 0.35);
+}
+
+/* 많이 모인 곳은 인디고로 무게감 + 골드 숫자 */
+.festival-cluster--lg {
+  background: rgba(30, 27, 75, 0.22);
+}
+
+.festival-cluster--lg span {
+  background: var(--night);
+  color: var(--sparkle);
+  font-size: 0.95rem;
+}
+
+.festival-cluster:hover {
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .festival-cluster:hover {
+    transform: none;
+  }
+}
+
+/* ----- 달력(왼쪽) + 지도(오른쪽) ----- */
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+  margin-bottom: 8px;
+}
+
+/* 지도 칸은 달력 높이에 맞춰 늘어난다 */
+.calendar-layout__map {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+
+.calendar-layout__map .festival-map {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-layout__map .festival-map__canvas,
+.calendar-layout__map .festival-map__canvas--wide {
+  flex: 1;
+  height: auto;
+  min-height: 280px;
+}
+
+.calendar-map-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.calendar-map-placeholder.skeleton {
+  height: auto;
+  border: 0;
+}
+
+@media (max-width: 820px) {
+  .calendar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-layout__map {
+    min-height: 0;
+  }
+
+  .calendar-layout__map .festival-map__canvas,
+  .calendar-layout__map .festival-map__canvas--wide {
+    flex: none;
+    height: 260px;
+    min-height: 0;
+  }
+
+  .calendar-map-placeholder {
+    min-height: 120px;
+  }
+
+  .calendar-map-placeholder.skeleton {
+    min-height: 260px;
   }
 }

@@ -1,28 +1,67 @@
 import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 import 'leaflet/dist/leaflet.css'
 
-// Vite 번들에서 기본 마커 아이콘 경로가 깨지는 문제 보정
-const DefaultIcon = L.icon({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-})
-L.Marker.prototype.options.icon = DefaultIcon
+/**
+ * 지도 타일: OpenStreetMap (API 키 불필요, 한글 지명 표시)
+ * - CARTO 등 다른 무료 타일은 이제 API 키가 필요해 사용하지 않는다.
+ * - 테마와 어울리도록 채도를 낮추는 보정은 App.css 의 .leaflet-tile-pane 필터에서 한다.
+ */
+const TILE = {
+  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  subdomains: 'abc',
+}
 
-// 지도 타일: 기본 OpenStreetMap (지역명 라벨이 잘 보임)
-const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-const TILE_SUBDOMAINS = 'abc'
+/** 테마 색 물방울 핀 (SVG) */
+const PIN_HTML = `
+<svg viewBox="0 0 36 46" width="36" height="46" aria-hidden="true">
+  <path d="M18 44s-14-14.2-14-25.5A14 14 0 0 1 32 18.5C32 29.8 18 44 18 44z"
+        fill="#be185d" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="18" cy="18.5" r="5.5" fill="#fbbf24"/>
+</svg>`
+
+const FestivalPinIcon = L.divIcon({
+  className: 'festival-pin',
+  html: PIN_HTML,
+  iconSize: [36, 46],
+  iconAnchor: [18, 44],
+  popupAnchor: [0, -40],
+})
+
+/**
+ * 마우스 환경(데스크톱)인지 판별.
+ * 터치 기기에서 지도 드래그를 켜면 페이지 스크롤이 지도에 걸리므로 마우스일 때만 켠다.
+ */
+function isMousePointer() {
+  if (typeof window === 'undefined' || !window.matchMedia) return false
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+}
+
+/** 핀 묶음 아이콘: 개수에 따라 크기 3단계 */
+function createClusterIcon(cluster) {
+  const count = cluster.getChildCount()
+  const size = count < 10 ? 38 : count < 30 ? 46 : 54
+  const level = count < 10 ? 'sm' : count < 30 ? 'md' : 'lg'
+  return L.divIcon({
+    html: `<span>${count}</span>`,
+    className: `festival-cluster festival-cluster--${level}`,
+    iconSize: L.point(size, size, true),
+  })
+}
+
+function FestivalTileLayer() {
+  return (
+    <TileLayer
+      attribution={TILE.attribution}
+      url={TILE.url}
+      subdomains={TILE.subdomains}
+    />
+  )
+}
 
 /** 좌표 유효 여부 (상세·달력 지도 공통) */
 export function hasValidCoordinates(latitude, longitude) {
@@ -41,7 +80,7 @@ function FitBounds({ positions }) {
       map.setView(positions[0], 13)
       return
     }
-    map.fitBounds(positions, { padding: [28, 28], maxZoom: 13 })
+    map.fitBounds(positions, { padding: [36, 36], maxZoom: 13 })
   }, [map, positions])
   return null
 }
@@ -62,20 +101,19 @@ export default function FestivalMap({ latitude, longitude, name }) {
         center={position}
         zoom={14}
         scrollWheelZoom={false}
-        dragging={false}
+        dragging={isMousePointer()}
         touchZoom={true}
         className="festival-map__canvas"
       >
-        <TileLayer
-          attribution={TILE_ATTRIBUTION}
-          url={TILE_URL}
-          subdomains={TILE_SUBDOMAINS}
-        />
-        <Marker position={position}>
-          {name ? <Popup>{name}</Popup> : null}
+        <FestivalTileLayer />
+        <Marker position={position} icon={FestivalPinIcon}>
+          {name ? (
+            <Popup>
+              <strong className="festival-popup__title">{name}</strong>
+            </Popup>
+          ) : null}
         </Marker>
       </MapContainer>
-      <p className="festival-map__note">지도 타일: OpenStreetMap</p>
     </div>
   )
 }
@@ -90,6 +128,7 @@ export function FestivalsMap({ festivals }) {
     .map((f) => ({
       id: f.id,
       name: f.festival_name,
+      location: f.location,
       position: [Number(f.latitude), Number(f.longitude)],
     }))
 
@@ -107,24 +146,37 @@ export function FestivalsMap({ festivals }) {
         center={center}
         zoom={12}
         scrollWheelZoom={false}
-        dragging={false}
+        dragging={isMousePointer()}
         touchZoom={true}
         className="festival-map__canvas festival-map__canvas--wide"
       >
-        <TileLayer
-          attribution={TILE_ATTRIBUTION}
-          url={TILE_URL}
-          subdomains={TILE_SUBDOMAINS}
-        />
+        <FestivalTileLayer />
         <FitBounds positions={positions} />
-        {points.map((point) => (
-          <Marker key={point.id} position={point.position}>
-            <Popup>{point.name}</Popup>
-          </Marker>
-        ))}
+        {/* 가까운 핀은 숫자 묶음으로 — 누르면 확대되고, 같은 자리 핀은 펼쳐진다 */}
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={48}
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom
+          iconCreateFunction={createClusterIcon}
+        >
+          {points.map((point) => (
+            <Marker key={point.id} position={point.position} icon={FestivalPinIcon}>
+              <Popup>
+                <strong className="festival-popup__title">{point.name}</strong>
+                {point.location && (
+                  <span className="festival-popup__place">{point.location}</span>
+                )}
+                <Link className="festival-popup__link" to={`/festivals/${point.id}`}>
+                  상세 보기 ›
+                </Link>
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
       </MapContainer>
       <p className="festival-map__note">
-        지도 타일: OpenStreetMap · 좌표가 있는 축제 {points.length}곳 표시
+        숫자 묶음을 누르면 확대되고, 핀을 누르면 상세 링크가 보여요 · {points.length}곳 표시
       </p>
     </div>
   )

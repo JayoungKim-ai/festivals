@@ -7,8 +7,8 @@ import { useEffect, useRef } from 'react'
  * - 파티클이 없을 때는 애니메이션 루프를 멈춰 CPU를 아낀다.
  */
 
-// 축제 느낌의 색상(초록·노랑 위주 + 포인트 색)
-const COLORS = ['#16a34a', '#22c55e', '#eab308', '#facc15', '#ffffff', '#f97316', '#ef4444']
+// 축제 느낌의 색상(핑크·골드 위주 + 포인트 색)
+const COLORS = ['#be185d', '#f472b6', '#fbbf24', '#ffd166', '#ffffff', '#a78bfa', '#38bdf8']
 
 export default function Fireworks() {
   const canvasRef = useRef(null)
