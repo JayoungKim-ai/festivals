@@ -144,8 +144,11 @@ def list_festivals(
         Query(description="축제명 부분 검색어 (앞뒤 공백 제거, 대소문자 무시)"),
     ] = None,
     region: Annotated[
-        str | None,
-        Query(description="시도 지역 필터 (예: 서울특별시). 비우면 전체"),
+        list[str] | None,
+        Query(
+            description="시도 지역 필터 (예: 서울특별시). 여러 지역은 region 을 반복 "
+            "(?region=서울특별시&region=부산광역시). 비우면 전체",
+        ),
     ] = None,
     status: Annotated[
         str | None,
@@ -156,7 +159,7 @@ def list_festivals(
 ):
     """SQLite에 저장된 축제 목록을 페이지 단위로 반환한다. search·region·status 를 함께 적용할 수 있다."""
     keyword = (search or "").strip()
-    region_name = (region or "").strip()
+    region_names = _clean_regions(region)
     status_value = (status or "").strip().lower()
 
     with Session(engine) as session:
@@ -168,8 +171,8 @@ def list_festivals(
             base_stmt = base_stmt.where(name_filter)
             count_stmt = count_stmt.where(name_filter)
 
-        if region_name:
-            region_filter = col(Festival.region) == region_name
+        if region_names:
+            region_filter = col(Festival.region).in_(region_names)
             base_stmt = base_stmt.where(region_filter)
             count_stmt = count_stmt.where(region_filter)
 
@@ -217,7 +220,7 @@ def list_festivals(
         "size": size,
         "total": total,
         "search": keyword or None,
-        "region": region_name or None,
+        "region": region_names or None,
         "status": status_value or None,
     }
 
@@ -241,21 +244,20 @@ def festival_calendar(
     year: Annotated[int, Query(ge=2000, le=2100, description="연도")],
     month: Annotated[int, Query(ge=1, le=12, description="월 (1~12)")],
     region: Annotated[
-        str | None,
-        Query(description="시도 지역 필터. 비우면 전체"),
+        list[str] | None,
+        Query(description="시도 지역 필터. 여러 지역은 region 을 반복. 비우면 전체"),
     ] = None,
 ):
     """
     선택한 월의 일자별 축제 건수와, 해당 월에 기간이 겹치는 축제 목록을 반환한다.
     각 날짜에 대해 start_date~end_date 구간에 포함되는 축제를 센다.
     """
-    region_name = (region or "").strip() or None
     with Session(engine) as session:
         return month_day_counts(
             session,
             year=year,
             month=month,
-            region=region_name,
+            regions=_clean_regions(region),
         )
 
 
@@ -266,8 +268,8 @@ def festivals_by_date(
         Query(description="조회 날짜 (YYYY-MM-DD)", examples=["2026-04-18"]),
     ],
     region: Annotated[
-        str | None,
-        Query(description="시도 지역 필터. 비우면 전체"),
+        list[str] | None,
+        Query(description="시도 지역 필터. 여러 지역은 region 을 반복. 비우면 전체"),
     ] = None,
 ):
     """
@@ -281,9 +283,18 @@ def festivals_by_date(
             detail="date 는 YYYY-MM-DD 형식이어야 합니다.",
         ) from exc
 
-    region_name = (region or "").strip() or None
     with Session(engine) as session:
-        return festivals_on_date(session, target=target, region=region_name)
+        return festivals_on_date(session, target=target, regions=_clean_regions(region))
+
+
+def _clean_regions(values: list[str] | None) -> list[str]:
+    """지역 쿼리 값에서 공백·빈 값·중복을 걷어낸다 (입력 순서 유지)."""
+    cleaned: list[str] = []
+    for value in values or []:
+        name = (value or "").strip()
+        if name and name not in cleaned:
+            cleaned.append(name)
+    return cleaned
 
 
 def date_from_iso(value: str):

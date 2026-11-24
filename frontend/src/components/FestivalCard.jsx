@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { shortRegionName } from '../regions'
 import FavoriteButton from './FavoriteButton'
 
 /** YYYY-MM-DD → YYYY.MM.DD */
@@ -54,40 +55,16 @@ function getFestivalStatus(festival) {
   return { status: 'ended', badge: '종료' }
 }
 
-/** 시도 이름 줄임 (지역 태그를 짧게) */
-const SIDO_SHORT = {
-  서울특별시: '서울',
-  부산광역시: '부산',
-  대구광역시: '대구',
-  인천광역시: '인천',
-  광주광역시: '광주',
-  대전광역시: '대전',
-  울산광역시: '울산',
-  세종특별자치시: '세종',
-  경기도: '경기',
-  강원도: '강원',
-  강원특별자치도: '강원',
-  충청북도: '충북',
-  충청남도: '충남',
-  전라북도: '전북',
-  전북특별자치도: '전북',
-  전라남도: '전남',
-  전남광주통합특별시: '전남광주',
-  경상북도: '경북',
-  경상남도: '경남',
-  제주특별자치도: '제주',
-}
-
 /** 주소에서 지역 태그를 만든다 (예: "충청북도 보은군 …" → "충북 보은군") */
 function shortArea(festival) {
   const address = festival.road_address || festival.parcel_address
   if (address) {
     const [sido, sigungu] = address.split(/\s+/)
-    const sidoShort = SIDO_SHORT[sido] || sido
+    const sidoShort = shortRegionName(sido)
     // 세종처럼 시군구가 없고 바로 도로명이 오는 경우는 시도만
     return sigungu && /[시군구]$/.test(sigungu) ? `${sidoShort} ${sigungu}` : sidoShort
   }
-  return festival.region ? SIDO_SHORT[festival.region] || festival.region : null
+  return festival.region ? shortRegionName(festival.region) : null
 }
 
 function CalendarIcon() {

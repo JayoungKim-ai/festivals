@@ -114,13 +114,22 @@ response
 - 좌표가 없는 축제는 지오코딩하지 않고, 상세 화면에서 지도 대신 안내 문구를 표시한다.
 - 지도 타일: OpenStreetMap (`tile.openstreetmap.org`), Leaflet 사용. 이용 시 OSM 저작권 표기 필요.
 
+## 지역 필터 (`region`) — 여러 지역 선택
+
+`GET /api/festivals`, `/api/festivals/calendar`, `/api/festivals/by-date` 공통.
+
+- 하나: `?region=서울특별시`
+- 여러 개: `region`을 반복한다 → `?region=서울특별시&region=부산광역시` (둘 중 하나에 해당하면 포함, OR)
+- 생략하면 전체 지역. 빈 값·중복 값은 무시한다.
+- 응답의 `region`은 적용된 지역 **배열** (`["서울특별시", "부산광역시"]`), 지역 조건이 없으면 `null`.
+
 ## 일자·월 기준 조회 API
 
 ### 월별 일자별 건수
 
 `GET /api/festivals/calendar?year=2026&month=4&region=서울특별시`
 
-- `region` 생략 시 전체 지역
+- `region` 생략 시 전체 지역 (여러 개는 위 "지역 필터" 참고)
 - 응답 예:
 
 ```json

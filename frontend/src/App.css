@@ -1657,11 +1657,6 @@ input:focus-visible,
   background: #f2efe9;
 }
 
-/* OSM 기본 지도의 강한 색을 눌러 테마 핀이 돋보이게 */
-.festival-map .leaflet-tile-pane {
-  filter: saturate(0.45) brightness(1.04) contrast(0.92);
-}
-
 /* 물방울 핀: divIcon 기본 흰 박스 제거 + 그림자 */
 .festival-pin {
   background: none;
@@ -1874,4 +1869,88 @@ input:focus-visible,
   .calendar-map-placeholder.skeleton {
     min-height: 260px;
   }
+}
+
+/* ----- 지역 여러 개 선택 버튼 ----- */
+.region-chips {
+  flex: 1 1 100%;
+  min-width: 0;
+  margin-top: 12px;
+}
+
+.region-chips__label {
+  margin: 0 0 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.region-chips__hint {
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.region-chips__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.region-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.region-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary-strong);
+  background: var(--primary-soft);
+}
+
+.region-chip--active,
+.region-chip--active:hover {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+/* 남색 히어로 위 */
+.region-chips--dark .region-chips__label {
+  color: var(--night-muted);
+}
+
+.region-chips--dark .region-chips__hint {
+  color: #9ea4cf;
+}
+
+.region-chips--dark .region-chip {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--night-muted);
+}
+
+.region-chips--dark .region-chip:hover {
+  border-color: var(--accent);
+  background: rgba(251, 191, 36, 0.12);
+  color: #fff;
+}
+
+.region-chips--dark .region-chip--active,
+.region-chips--dark .region-chip--active:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--night);
+}
+
+.region-chips--dark .region-chip:focus-visible {
+  outline-color: var(--focus-ring-dark);
 }

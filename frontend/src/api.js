@@ -92,16 +92,25 @@ export async function checkHealth() {
   return request('/health')
 }
 
+/** 지역 여러 개를 region=A&region=B 형태로 붙인다 (백엔드가 OR 로 처리) */
+function appendRegions(query, regions) {
+  for (const name of regions || []) {
+    const value = (name || '').trim()
+    if (value) query.append('region', value)
+  }
+}
+
 /**
  * 축제 목록 조회
- * @param {{ page?: number, size?: number, search?: string, region?: string, status?: string }} params
+ * @param {{ page?: number, size?: number, search?: string, regions?: string[], status?: string }} params
+ *   regions: 시도 이름 배열 (비우면 전체, 여러 개면 OR)
  *   status: '' (전체) | 'ongoing' (진행중) | 'ended' (종료)
  */
 export async function fetchFestivals({
   page = 1,
   size = 10,
   search = '',
-  region = '',
+  regions = [],
   status = '',
 } = {}) {
   const query = new URLSearchParams()
@@ -109,8 +118,7 @@ export async function fetchFestivals({
   query.set('size', String(size))
   const keyword = (search || '').trim()
   if (keyword) query.set('search', keyword)
-  const regionName = (region || '').trim()
-  if (regionName) query.set('region', regionName)
+  appendRegions(query, regions)
   const statusValue = (status || '').trim()
   if (statusValue) query.set('status', statusValue)
 
@@ -132,25 +140,23 @@ export async function fetchFestival(festivalId) {
 
 /**
  * 월별 일자별 축제 건수 + 해당 월 축제 목록
- * @param {{ year: number, month: number, region?: string }} params
+ * @param {{ year: number, month: number, regions?: string[] }} params
  */
-export async function fetchFestivalCalendar({ year, month, region = '' } = {}) {
+export async function fetchFestivalCalendar({ year, month, regions = [] } = {}) {
   const query = new URLSearchParams()
   query.set('year', String(year))
   query.set('month', String(month))
-  const regionName = (region || '').trim()
-  if (regionName) query.set('region', regionName)
+  appendRegions(query, regions)
   return request(`/api/festivals/calendar?${query.toString()}`)
 }
 
 /**
  * 특정 날짜 축제 목록
- * @param {{ date: string, region?: string }} params  date: YYYY-MM-DD
+ * @param {{ date: string, regions?: string[] }} params  date: YYYY-MM-DD
  */
-export async function fetchFestivalsByDate({ date, region = '' } = {}) {
+export async function fetchFestivalsByDate({ date, regions = [] } = {}) {
   const query = new URLSearchParams()
   query.set('date', date)
-  const regionName = (region || '').trim()
-  if (regionName) query.set('region', regionName)
+  appendRegions(query, regions)
   return request(`/api/festivals/by-date?${query.toString()}`)
 }

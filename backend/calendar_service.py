@@ -21,7 +21,7 @@ def month_day_counts(
     *,
     year: int,
     month: int,
-    region: str | None = None,
+    regions: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     해당 월의 각 날짜별 축제 건수와, 월에 겹치는 축제 목록을 반환한다.
@@ -30,7 +30,7 @@ def month_day_counts(
         {
           "year": 2026,
           "month": 4,
-          "region": "서울특별시" | null,
+          "region": ["서울특별시", ...] | null,
           "total": 12,
           "items": [Festival, ...],
           "days": [{"date": "2026-04-01", "count": 2}, ...]
@@ -44,7 +44,7 @@ def month_day_counts(
         session,
         range_start=month_start,
         range_end=month_end,
-        region=region,
+        regions=regions,
     )
 
     counts = {month_start + timedelta(days=i): 0 for i in range(last_day)}
@@ -75,7 +75,7 @@ def month_day_counts(
     return {
         "year": year,
         "month": month,
-        "region": region,
+        "region": regions or None,
         # 해당 월과 기간이 겹치는 축제 수 (일자별 count 합이 아님)
         "total": len(festivals),
         "items": festivals,
@@ -90,7 +90,7 @@ def festivals_on_date(
     session: Session,
     *,
     target: date,
-    region: str | None = None,
+    regions: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     특정 날짜에 진행 중인 축제 목록 (좌표 포함).
@@ -102,7 +102,7 @@ def festivals_on_date(
         session,
         range_start=target,
         range_end=target,
-        region=region,
+        regions=regions,
     )
     # 목록 정렬: 시작일 → 이름
     festivals.sort(
@@ -113,7 +113,7 @@ def festivals_on_date(
     )
     return {
         "date": target.isoformat(),
-        "region": region,
+        "region": regions or None,
         "total": len(festivals),
         "items": festivals,
     }
@@ -124,7 +124,7 @@ def _festivals_overlapping_range(
     *,
     range_start: date,
     range_end: date,
-    region: str | None,
+    regions: list[str] | None,
 ) -> list[Festival]:
     """
     [range_start, range_end] 와 기간이 겹치는 축제.
@@ -139,8 +139,8 @@ def _festivals_overlapping_range(
         .where(col(Festival.start_date) <= range_end)
         .where(effective_end >= range_start)
     )
-    if region:
-        stmt = stmt.where(col(Festival.region) == region)
+    if regions:
+        stmt = stmt.where(col(Festival.region).in_(regions))
 
     return list(session.exec(stmt).all())
 
