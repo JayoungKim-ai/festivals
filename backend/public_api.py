@@ -218,10 +218,11 @@ def _parse_page_payload(
     requested_rows: int,
 ) -> dict[str, Any]:
     """JSON 응답을 내부에서 쓰기 쉬운 형태로 정리한다."""
-    response = payload.get("response")
-    if not isinstance(response, dict):
+    # 구 형식: {"response": {"header", "body"}} / 신 형식: 최상위에 {"header", "body"}
+    response = payload.get("response", payload)
+    if not isinstance(response, dict) or "header" not in response:
         raise PublicApiError(
-            "응답에 response 객체가 없습니다.",
+            "응답에 header/body 객체가 없습니다.",
             retryable=False,
         )
 
@@ -239,6 +240,9 @@ def _parse_page_payload(
 
     body = response.get("body") or {}
     raw_items = body.get("items", [])
+    # 신 형식: items = {"item": [...]} (1건이면 item이 객체일 수 있음)
+    if isinstance(raw_items, dict) and "item" in raw_items:
+        raw_items = raw_items["item"]
 
     # items가 없거나 빈 문자열인 경우(데이터 없음) 빈 목록으로 처리
     if raw_items in (None, "", []):
